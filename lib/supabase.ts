@@ -5,10 +5,13 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY env variables. Supabase client will not work.');
+    if (import.meta.env.DEV) {
+        console.warn('⚠️ Variáveis VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY ausentes no .env.local');
+    }
 }
 
+// Inicializa apenas se as chaves existirem para evitar erros de DNS com placeholders
 export const supabase = createClient(
-    supabaseUrl || 'https://placeholder.supabase.co',
-    supabaseAnonKey || 'placeholder-key'
+    supabaseUrl || 'https://missing-url.supabase.co',
+    supabaseAnonKey || 'missing-key'
 );
