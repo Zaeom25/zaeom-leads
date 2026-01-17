@@ -51,7 +51,7 @@ export const getCredits = async (): Promise<{ search: number, enrich: number, st
 
         const { data: org, error } = await supabase
             .from('organizations')
-            .select('search_credits, enrich_credits, subscription_status, monthly_goal')
+            .select('search_credits, enrich_credits, subscription_status')
             .eq('id', profile.organization_id)
             .single();
 
@@ -63,7 +63,7 @@ export const getCredits = async (): Promise<{ search: number, enrich: number, st
             search: org.search_credits,
             enrich: org.enrich_credits,
             status: org.subscription_status || 'free',
-            monthly_goal: org.monthly_goal || 50000,
+            monthly_goal: 50000,
             organizationId: profile.organization_id
         };
 

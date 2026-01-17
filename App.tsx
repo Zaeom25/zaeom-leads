@@ -139,7 +139,7 @@ function DashboardContent() {
         // Parallel fetches for speed
         const fetches = [
           supabase.from('leads').select('*').order('order_index', { ascending: true }).order('addedAt', { ascending: false }),
-          supabase.from('lead_tag_definitions').select('*').order('name')
+          supabase.from('tag_definitions').select('*').order('name')
         ];
 
         if (isAdmin) {
@@ -697,7 +697,7 @@ function DashboardContent() {
       let tagDef = tagDefinitions.find(d => d.name === tagName);
       if (!tagDef && user) {
         const { data: newDef, error: defError } = await supabase
-          .from('lead_tag_definitions')
+          .from('tag_definitions')
           .insert([{ name: tagName, color: tagColor, user_id: user.id }])
           .select()
           .single();
@@ -763,7 +763,7 @@ function DashboardContent() {
 
       setTagDefinitions(prev => prev.filter(d => d.id !== tagId));
 
-      const { error } = await supabase.from('lead_tag_definitions').delete().eq('id', tagId);
+      const { error } = await supabase.from('tag_definitions').delete().eq('id', tagId);
       if (error) throw error;
 
       // Update local state for all leads
@@ -786,7 +786,7 @@ function DashboardContent() {
     if (!tagId) return;
 
     const { error } = await supabase
-      .from('lead_tag_definitions')
+      .from('tag_definitions')
       .update({ name, color })
       .eq('id', tagId);
 
