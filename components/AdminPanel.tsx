@@ -252,14 +252,14 @@ export const AdminPanel: React.FC = () => {
             const filePath = `logos/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
-                .from('Zaeom Leads - Bucket')
+                .from('Zaeom Bucket')
                 .upload(filePath, file);
 
             if (uploadError) throw uploadError;
 
             // Get Public URL
             const { data: { publicUrl } } = supabase.storage
-                .from('Zaeom Leads - Bucket')
+                .from('Zaeom Bucket')
                 .getPublicUrl(filePath);
 
             // 3. Upsert Settings Table (using upsert ensures row creation if missing)
@@ -311,14 +311,14 @@ export const AdminPanel: React.FC = () => {
             const filePath = `favicons/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
-                .from('Zaeom Leads - Bucket')
+                .from('Zaeom Bucket')
                 .upload(filePath, file);
 
             if (uploadError) throw uploadError;
 
             // Get Public URL
             const { data: { publicUrl } } = supabase.storage
-                .from('Zaeom Leads - Bucket')
+                .from('Zaeom Bucket')
                 .getPublicUrl(filePath);
 
             // 3. Upsert Settings Table
