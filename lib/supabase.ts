@@ -10,8 +10,20 @@ if (!supabaseUrl || !supabaseAnonKey) {
     }
 }
 
-// Inicializa apenas se as chaves existirem para evitar erros de DNS com placeholders
+// Função para limpar chaves de qualquer caractere invisível ou quebra de linha
+const scrub = (val: string | undefined) => (val || '').replace(/\s/g, '');
+
+const scrubbedUrl = scrub(supabaseUrl);
+const scrubbedKey = scrub(supabaseAnonKey);
+
+if (import.meta.env.DEV) {
+    console.log('📡 Supabase Init:', {
+        url: scrubbedUrl,
+        keyTail: scrubbedKey.slice(-5)
+    });
+}
+
 export const supabase = createClient(
-    supabaseUrl || 'https://missing-url.supabase.co',
-    supabaseAnonKey || 'missing-key'
+    scrubbedUrl || 'https://missing-url.supabase.co',
+    scrubbedKey || 'missing-key'
 );

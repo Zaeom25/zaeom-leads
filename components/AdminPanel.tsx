@@ -135,17 +135,40 @@ export const AdminPanel: React.FC = () => {
 
         setInviting(true);
         try {
-            const { error } = await supabase.functions.invoke('invite-user', {
-                body: {
+            const { data: sessionData } = await supabase.auth.getSession();
+            const token = sessionData.session?.access_token;
+
+            // Clean keys for the request
+            const scrub = (val: any) => (val || '').toString().trim().replace(/\s/g, '');
+            const baseUrl = scrub(import.meta.env.VITE_SUPABASE_URL);
+            const anonKey = scrub(import.meta.env.VITE_SUPABASE_ANON_KEY);
+
+            console.log('🔍 Debug Invite:', {
+                hasToken: !!token,
+                tokenLength: token?.length,
+                baseUrl: baseUrl,
+                anonKeyStart: anonKey.substring(0, 10)
+            });
+
+            const response = await fetch(`${baseUrl}/functions/v1/invite-user`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                    'apikey': anonKey,
+                    'x-client-info': 'supabase-js-invite'
+                },
+                body: JSON.stringify({
                     email: inviteEmail,
                     name: inviteName,
                     organizationId: currentProfile?.organization_id
-                }
+                })
             });
 
-            if (error) {
-                console.error(error);
-                throw new Error('Falha ao enviar convite');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Invite error details:', errorData);
+                throw new Error(errorData.error || `Erro ${response.status}: Falha ao enviar convite`);
             }
 
             addToast(`Convite enviado para ${inviteEmail}!`, 'success');
@@ -153,10 +176,6 @@ export const AdminPanel: React.FC = () => {
             setInviteName('');
             setIsInviteOpen(false);
             fetchUsers();
-            // Wait a bit and refresh users? The user won't exist in 'profiles' until they login unless we insert a placeholder?
-            // Actually standard invites create a user in auth.users, but our triggers only run on INSERT.
-            // So the user won't appear in 'profiles' until they accept the invite and "Sign Up" effectively happens.
-            // But we can manually refresh to see if anything changed.
         } catch (err) {
             addToast(translateError(err), 'error');
         } finally {
