@@ -168,13 +168,31 @@ export const AdminPanel: React.FC = () => {
 
     const handleToggleRole = async (targetUser: Profile) => {
         setMenuOpen(null);
-        if (targetUser.id === (await supabase.auth.getUser()).data.user?.id) {
+        if (targetUser.id === currentUser?.id) {
             addToast('Você não pode alterar seu próprio cargo.', 'error');
             return;
         }
 
-        const newRole = targetUser.role === 'admin' ? 'seller' : 'admin';
-        const actionName = newRole === 'admin' ? 'promovido a Master' : 'rebaixado a Vendedor';
+        // Cycle through roles: Seller -> Admin -> Master -> Seller
+        let newRole: 'seller' | 'staff_admin' | 'admin' = 'seller';
+        let actionName = '';
+
+        if (targetUser.role === 'seller') {
+            newRole = 'staff_admin';
+            actionName = 'promovido a Admin';
+        } else if (targetUser.role === 'staff_admin') {
+            newRole = 'admin';
+            actionName = 'promovido a Master';
+        } else {
+            newRole = 'seller';
+            actionName = 'alterado para Vendedor';
+        }
+
+        // Se o usuário atual for 'staff_admin', ele não pode promover ninguém a Master
+        if (currentUser?.role === 'staff_admin' && newRole === 'admin') {
+            addToast('Você não tem permissão para promover alguém a Master.', 'error');
+            return;
+        }
 
         try {
             const { error } = await supabase
@@ -462,18 +480,22 @@ export const AdminPanel: React.FC = () => {
                     >
                         Usuários
                     </button>
-                    <button
-                        onClick={() => setActiveTab('branding')}
-                        className={`px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-[0.8rem] transition-all duration-300 ${activeTab === 'branding' ? 'bg-gradient-cta text-background-main shadow-lg shadow-primary/20 scale-105' : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
-                    >
-                        Branding
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('config')}
-                        className={`px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-[0.8rem] transition-all duration-300 ${activeTab === 'config' ? 'bg-gradient-cta text-background-main shadow-lg shadow-primary/20 scale-105' : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
-                    >
-                        Configurações
-                    </button>
+                    {currentUser?.role === 'admin' && (
+                        <>
+                            <button
+                                onClick={() => setActiveTab('branding')}
+                                className={`px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-[0.8rem] transition-all duration-300 ${activeTab === 'branding' ? 'bg-gradient-cta text-background-main shadow-lg shadow-primary/20 scale-105' : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
+                            >
+                                Branding
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('config')}
+                                className={`px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-[0.8rem] transition-all duration-300 ${activeTab === 'config' ? 'bg-gradient-cta text-background-main shadow-lg shadow-primary/20 scale-105' : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
+                            >
+                                Configurações
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -572,9 +594,11 @@ export const AdminPanel: React.FC = () => {
                                             <td className="p-5">
                                                 <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-[0.1em] ${user.role === 'admin'
                                                     ? 'bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(57,242,101,0.1)]'
-                                                    : 'bg-white/5 text-text-secondary border border-white/10'
+                                                    : user.role === 'staff_admin'
+                                                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                                        : 'bg-white/5 text-text-secondary border border-white/10'
                                                     }`}>
-                                                    {user.role === 'admin' ? 'Master' : 'Vendedor'}
+                                                    {user.role === 'admin' ? 'Master' : user.role === 'staff_admin' ? 'Admin' : 'Vendedor'}
                                                 </span>
                                             </td>
                                             <td className="p-5">

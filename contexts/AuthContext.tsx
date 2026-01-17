@@ -7,7 +7,7 @@ interface AuthContextType {
     user: User | null;
     session: Session | null;
     profile: Profile | null;
-    role: 'admin' | 'seller' | 'org_owner' | 'org_member' | 'system_admin' | null;
+    role: 'admin' | 'seller' | 'org_owner' | 'org_member' | 'system_admin' | 'staff_admin' | null;
     loading: boolean;
     signIn: (email: string, password: string) => Promise<{ data: any; error: any }>;
     signInWithGoogle: () => Promise<{ data: any; error: any }>;

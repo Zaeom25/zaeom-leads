@@ -65,7 +65,7 @@ function DashboardContent() {
   const [logoError, setLogoError] = useState(false);
 
   const { addToast } = useToast();
-  const isAdmin = profile?.role === 'admin';
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'staff_admin';
 
   // Sidebar State
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -1056,7 +1056,7 @@ function DashboardContent() {
                   {loading ? 'Carregando...' : (profile?.name || 'Usuário')}
                 </span>
                 <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest truncate w-full">
-                  {loading ? '...' : (profile?.role === 'admin' ? 'Master' : 'Vendedor')}
+                  {loading ? '...' : (profile?.role === 'admin' ? 'Master' : profile?.role === 'staff_admin' ? 'Admin' : 'Vendedor')}
                 </span>
               </div>
             )}

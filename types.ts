@@ -21,7 +21,7 @@ export interface Organization {
 export interface Profile {
   id: string;
   email: string;
-  role: 'admin' | 'seller' | 'org_owner' | 'org_member' | 'system_admin';
+  role: 'admin' | 'seller' | 'org_owner' | 'org_member' | 'system_admin' | 'staff_admin';
   name: string;
   organization_id: string | null;
   avatar_url?: string;
