@@ -223,7 +223,7 @@ export const Login: React.FC = () => {
                                 </div>
                             )}
                             <div>
-                                <label className="block text-[9px] font-black text-text-secondary uppercase mb-2 tracking-[0.2em] opacity-50">Email Institucional</label>
+                                <label className="block text-[9px] font-black text-text-secondary uppercase mb-2 tracking-[0.2em] opacity-50">Email</label>
                                 <div className="relative">
                                     <Icons.Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary opacity-40" size={18} strokeWidth={3} />
                                     <input
