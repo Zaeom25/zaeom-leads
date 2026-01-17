@@ -17,6 +17,11 @@ serve(async (req: Request) => {
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
         )
 
+        if (!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
+            console.error('SUPABASE_SERVICE_ROLE_KEY is missing');
+            throw new Error('Server configuration error: Missing Secret Key');
+        }
+
         const { email, name, organizationId } = await req.json();
         if (!email) throw new Error('Email is required');
 

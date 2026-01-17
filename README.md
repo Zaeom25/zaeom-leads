@@ -1,4 +1,4 @@
-# LumoLeads Manager 💎
+# Zaeom Leads Manager 💎
 
 Plataforma inteligente de prospecção B2B com enriquecimento de dados via IA.
 

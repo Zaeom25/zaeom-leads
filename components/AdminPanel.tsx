@@ -698,7 +698,7 @@ export const AdminPanel: React.FC = () => {
                                                 value={siteName}
                                                 onChange={e => setSiteName(e.target.value)}
                                                 className="w-full pl-14 pr-5 py-4 rounded-2xl border-2 border-white/5 bg-background-card/50 text-text-primary focus:border-primary/50 focus:bg-background-card outline-none transition-all text-sm font-bold placeholder:text-text-secondary/20 shadow-inner"
-                                                placeholder="Ex: LumoLeads"
+                                                placeholder="Ex: Zaeom Leads"
                                             />
                                         </div>
                                     </div>

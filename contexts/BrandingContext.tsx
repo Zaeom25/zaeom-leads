@@ -25,7 +25,7 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 .from('settings')
                 .select('value')
                 .eq('key', 'branding')
-                .single();
+                .maybeSingle();
 
             if (error) {
                 console.error('Error fetching branding:', error);
