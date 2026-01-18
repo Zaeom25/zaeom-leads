@@ -185,26 +185,11 @@ export const AdminPanel: React.FC = () => {
 
     const [menuOpen, setMenuOpen] = useState<string | null>(null);
 
-    const handleToggleRole = async (targetUser: Profile) => {
+    const handleSetRole = async (targetUser: Profile, newRole: 'seller' | 'staff_admin' | 'admin') => {
         setMenuOpen(null);
         if (targetUser.id === currentUser?.id) {
             addToast('Você não pode alterar seu próprio cargo.', 'error');
             return;
-        }
-
-        // Cycle through roles: Seller -> Admin -> Master -> Seller
-        let newRole: 'seller' | 'staff_admin' | 'admin' = 'seller';
-        let actionName = '';
-
-        if (targetUser.role === 'seller') {
-            newRole = 'staff_admin';
-            actionName = 'promovido a Admin';
-        } else if (targetUser.role === 'staff_admin') {
-            newRole = 'admin';
-            actionName = 'promovido a Master';
-        } else {
-            newRole = 'seller';
-            actionName = 'alterado para Vendedor';
         }
 
         // Se o usuário atual for 'staff_admin', ele não pode promover ninguém a Master
@@ -212,6 +197,12 @@ export const AdminPanel: React.FC = () => {
             addToast('Você não tem permissão para promover alguém a Master.', 'error');
             return;
         }
+
+        const actionNames = {
+            seller: 'rebaixado para Vendedor',
+            staff_admin: 'promovido a Admin',
+            admin: 'promovido a Master'
+        };
 
         try {
             const { error } = await supabase
@@ -221,7 +212,7 @@ export const AdminPanel: React.FC = () => {
 
             if (error) throw error;
 
-            addToast(`${targetUser.name || 'Usuário'} foi ${actionName}!`, 'success');
+            addToast(`${targetUser.name || 'Usuário'} foi ${actionNames[newRole]}!`, 'success');
             fetchUsers();
         } catch (error) {
             console.error('Error updating role:', error);
@@ -661,16 +652,56 @@ export const AdminPanel: React.FC = () => {
                                                                     >
                                                                         <Icons.Zap size={16} /> Adicionar Créditos
                                                                     </button>
-                                                                    <button
-                                                                        onClick={() => handleToggleRole(user)}
-                                                                        className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-text-secondary hover:bg-primary/10 hover:text-primary flex items-center gap-3 transition-all rounded-xl"
-                                                                    >
-                                                                        {user.role === 'admin' ? (
-                                                                            <><Icons.UserMinus size={16} /> Rebaixar para Vendedor</>
-                                                                        ) : (
-                                                                            <><Icons.ShieldCheck size={16} /> Promover a Master</>
-                                                                        )}
-                                                                    </button>
+                                                                    {user.role === 'seller' && (
+                                                                        <>
+                                                                            <button
+                                                                                onClick={() => handleSetRole(user, 'staff_admin')}
+                                                                                className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-text-secondary hover:bg-primary/10 hover:text-primary flex items-center gap-3 transition-all rounded-xl"
+                                                                            >
+                                                                                <Icons.Shield size={16} /> Promover a Admin
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleSetRole(user, 'admin')}
+                                                                                className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-text-secondary hover:bg-primary/10 hover:text-primary flex items-center gap-3 transition-all rounded-xl"
+                                                                            >
+                                                                                <Icons.ShieldCheck size={16} /> Promover a Master
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+
+                                                                    {user.role === 'staff_admin' && (
+                                                                        <>
+                                                                            <button
+                                                                                onClick={() => handleSetRole(user, 'seller')}
+                                                                                className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-text-secondary hover:bg-primary/10 hover:text-primary flex items-center gap-3 transition-all rounded-xl"
+                                                                            >
+                                                                                <Icons.UserMinus size={16} /> Rebaixar para Vendedor
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleSetRole(user, 'admin')}
+                                                                                className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-text-secondary hover:bg-primary/10 hover:text-primary flex items-center gap-3 transition-all rounded-xl"
+                                                                            >
+                                                                                <Icons.ShieldCheck size={16} /> Promover a Master
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+
+                                                                    {user.role === 'admin' && (
+                                                                        <>
+                                                                            <button
+                                                                                onClick={() => handleSetRole(user, 'staff_admin')}
+                                                                                className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-text-secondary hover:bg-primary/10 hover:text-primary flex items-center gap-3 transition-all rounded-xl"
+                                                                            >
+                                                                                <Icons.UserMinus size={16} /> Rebaixar para Admin
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleSetRole(user, 'seller')}
+                                                                                className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-text-secondary hover:bg-primary/10 hover:text-primary flex items-center gap-3 transition-all rounded-xl"
+                                                                            >
+                                                                                <Icons.Users size={16} /> Rebaixar para Vendedor
+                                                                            </button>
+                                                                        </>
+                                                                    )}
                                                                     <button
                                                                         onClick={() => handleDeleteUser(user.id)}
                                                                         className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-red-400 hover:bg-red-500/10 flex items-center gap-3 transition-all rounded-xl border-t border-white/5 mt-1"
