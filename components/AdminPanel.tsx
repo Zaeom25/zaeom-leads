@@ -193,7 +193,7 @@ export const AdminPanel: React.FC = () => {
         }
 
         // Se o usuário atual for 'staff_admin', ele não pode promover ninguém a Master
-        if (currentUser?.role === 'staff_admin' && newRole === 'admin') {
+        if (currentProfile?.role === 'staff_admin' && newRole === 'admin') {
             addToast('Você não tem permissão para promover alguém a Master.', 'error');
             return;
         }
@@ -490,7 +490,7 @@ export const AdminPanel: React.FC = () => {
                     >
                         Usuários
                     </button>
-                    {currentUser?.role === 'admin' && (
+                    {['admin', 'org_owner'].includes(currentProfile?.role || '') && (
                         <>
                             <button
                                 onClick={() => setActiveTab('branding')}
@@ -602,13 +602,13 @@ export const AdminPanel: React.FC = () => {
                                             </td>
                                             <td className="p-5 text-text-secondary text-[11px] font-medium opacity-60">{user.email}</td>
                                             <td className="p-5">
-                                                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-[0.1em] ${user.role === 'admin'
+                                                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-[0.1em] ${['admin', 'org_owner'].includes(user.role)
                                                     ? 'bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(57,242,101,0.1)]'
                                                     : user.role === 'staff_admin'
                                                         ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                                                         : 'bg-white/5 text-text-secondary border border-white/10'
                                                     }`}>
-                                                    {user.role === 'admin' ? 'Master' : user.role === 'staff_admin' ? 'Admin' : 'Vendedor'}
+                                                    {['admin', 'org_owner'].includes(user.role) ? 'Master' : user.role === 'staff_admin' ? 'Admin' : 'Vendedor'}
                                                 </span>
                                             </td>
                                             <td className="p-5">

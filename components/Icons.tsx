@@ -94,7 +94,8 @@ import {
   Utensils,
   GraduationCap,
   Info,
-  Save
+  Save,
+  Shield
 } from 'lucide-react';
 
 export const Icons = {
@@ -193,7 +194,8 @@ export const Icons = {
   Utensils,
   GraduationCap,
   Info,
-  Save
+  Save,
+  Shield
 };
 
 export type IconName = keyof typeof Icons;
