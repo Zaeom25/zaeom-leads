@@ -42,8 +42,14 @@ serve(async (req: Request) => {
         });
 
         const { data: { user }, error: userError } = await supabaseUserClient.auth.getUser();
+
         if (userError || !user) {
-            return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+            console.error('[Auth Error] getUser failed:', userError);
+            console.log('[Auth Debug] Auth Header Present:', !!authHeader);
+            return new Response(JSON.stringify({
+                error: 'Unauthorized',
+                details: userError?.message || 'No user found'
+            }), { status: 401, headers: corsHeaders });
         }
 
         const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
