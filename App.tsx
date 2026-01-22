@@ -629,6 +629,7 @@ function DashboardContent() {
         if (result.email) updates.email = result.email;
         if (result.website) updates.website = result.website;
         if (result.cnpj) updates.cnpj = result.cnpj;
+        if (result.partners) updates.partners = result.partners;
 
         setPipelineLeads(prev => prev.map(lead =>
           lead.id === id ? { ...lead, ...updates } : lead

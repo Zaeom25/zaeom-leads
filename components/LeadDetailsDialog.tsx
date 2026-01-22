@@ -109,10 +109,10 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
         try {
             // Fetch Checklists
             const { data: checklistsData, error: checklistsError } = await supabase
-                .from('lead_checklists')
+                .from('checklists')
                 .select(`
                     *,
-                    items:lead_checklist_items(*)
+                    items:checklist_items(*)
                 `)
                 .eq('lead_id', lead.id)
                 .order('order_index');
@@ -122,7 +122,7 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
 
             // Fetch Attachments
             const { data: attachmentsData, error: attachmentsError } = await supabase
-                .from('lead_attachments')
+                .from('attachments')
                 .select('*')
                 .eq('lead_id', lead.id)
                 .order('created_at', { ascending: false });
@@ -139,7 +139,7 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
 
     const handleAddChecklist = async (title: string = 'Checklist') => {
         const { data, error } = await supabase
-            .from('lead_checklists')
+            .from('checklists')
             .insert([{
                 lead_id: lead.id,
                 title: title,
@@ -158,7 +158,7 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
 
     const handleDeleteChecklist = async (checklistId: string) => {
         const { error } = await supabase
-            .from('lead_checklists')
+            .from('checklists')
             .delete()
             .eq('id', checklistId);
 
@@ -176,7 +176,7 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
         if (!checklist) return;
 
         const { data, error } = await supabase
-            .from('lead_checklist_items')
+            .from('checklist_items')
             .insert([{
                 checklist_id: checklistId,
                 content: content,
@@ -196,7 +196,7 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
 
     const handleToggleChecklistItem = async (checklistId: string, itemId: string, isCompleted: boolean) => {
         const { error } = await supabase
-            .from('lead_checklist_items')
+            .from('checklist_items')
             .update({ is_completed: !isCompleted })
             .eq('id', itemId);
 
@@ -214,7 +214,7 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
 
     const handleDeleteChecklistItem = async (checklistId: string, itemId: string) => {
         const { error } = await supabase
-            .from('lead_checklist_items')
+            .from('checklist_items')
             .delete()
             .eq('id', itemId);
 
@@ -276,7 +276,7 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
 
             // 2. Save to Database
             const { data, error: dbError } = await supabase
-                .from('lead_attachments')
+                .from('attachments')
                 .insert([{
                     lead_id: lead.id,
                     file_name: file.name,
@@ -313,7 +313,7 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
 
             // 2. Delete from Database
             const { error: dbError } = await supabase
-                .from('lead_attachments')
+                .from('attachments')
                 .delete()
                 .eq('id', attachment.id);
 
@@ -1123,6 +1123,29 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
                                                     <span className="text-xs font-bold text-primary">
                                                         {lead.user_id ? profilesMap[lead.user_id] : 'Não atribuído'}
                                                     </span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {lead.cnpj && (
+                                            <div className="space-y-1 pt-4 border-t border-white/5">
+                                                <span className="text-[9px] font-black text-text-secondary uppercase tracking-[0.2em] opacity-40">CNPJ Identificado</span>
+                                                <div className="flex items-center gap-2 text-xs font-bold text-primary">
+                                                    <Icons.ShieldCheck size={14} className="text-text-secondary" />
+                                                    {lead.cnpj}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {lead.partners && lead.partners.length > 0 && (
+                                            <div className="space-y-2 pt-4 border-t border-white/5">
+                                                <span className="text-[9px] font-black text-text-secondary uppercase tracking-[0.2em] opacity-40">Quadro de Sócios</span>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {lead.partners.map((partner, idx) => (
+                                                        <span key={idx} className="text-[10px] font-bold px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-text-primary">
+                                                            {partner}
+                                                        </span>
+                                                    ))}
                                                 </div>
                                             </div>
                                         )}

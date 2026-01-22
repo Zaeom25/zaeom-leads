@@ -61,6 +61,7 @@ export interface Lead {
   instagram?: string;
   facebook?: string;
   linkedin?: string;
+  role?: string;
 
   // CRM Fields
   source: 'inbound' | 'outbound' | 'manual' | 'ai_finder';
