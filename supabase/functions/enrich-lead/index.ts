@@ -17,6 +17,7 @@ interface EnrichedData {
     email: string | null;
     website: string | null;
     cnpj: string | null;
+    partners: string[] | null;
     confidence: "high" | "medium" | "low";
 }
 
@@ -93,29 +94,51 @@ serve(async (req: Request) => {
         const fetchTavily = async () => {
             if (!TAVILY_API_KEY) return '';
             try {
-                // Modified Query to specifically target Instagram, WhatsApp and Owner Name
-                const query = `"${businessName}" ${location} instagram whatsapp dono proprietário celular contato`;
+                // Modified Query to specifically target CNPJ, Instagram, WhatsApp and Owner Name
+                const query = `"${businessName}" ${location} CNPJ sócios "quadro societário" instagram whatsapp dono proprietário`;
                 const response = await fetch('https://api.tavily.com/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         api_key: TAVILY_API_KEY,
                         query: query,
-                        search_depth: "basic",
-                        max_results: 7
+                        search_depth: "advanced",
+                        max_results: 8
                     })
                 });
                 if (response.ok) {
                     const data = await response.json();
                     if (data.results) {
                         const txt = data.results.map((r: any) => `Título: ${r.title}\nURL: ${r.url}\nConteúdo: ${r.content}\n---`).join('\n');
-                        return `\n--- TAVILY SEARCH (Focado em Social/Contato) ---\n${txt}`;
+                        return `\n--- TAVILY SEARCH (Focado em Identidade/CNPJ/Social) ---\n${txt}`;
                     }
                 }
             } catch (e) {
                 console.error("Tavily Error:", e);
             }
             return '';
+        };
+
+        const fetchBrasilAPI = async (cnpj: string) => {
+            if (!cnpj) return null;
+            const cleanCnpj = cnpj.replace(/\D/g, '');
+            if (cleanCnpj.length !== 14) return null;
+
+            try {
+                const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    return {
+                        razao_social: data.razao_social,
+                        nome_fantasia: data.nome_fantasia,
+                        socios: (data.qsa || []).map((s: any) => s.nome_socio),
+                        situacao: data.descricao_situacao_cadastral
+                    };
+                }
+            } catch (e) {
+                console.error("BrasilAPI Error:", e);
+            }
+            return null;
         };
 
         const fetchFirecrawl = async () => {
@@ -172,56 +195,67 @@ serve(async (req: Request) => {
         ]);
 
         let combinedContext = tavilyContext + firecrawlContext;
-
-        // 4. Optimization
-        if (combinedContext.length > 15000) {
-            combinedContext = combinedContext.substring(0, 15000) + "\n...[TRUNCATED]";
-        }
+        console.log(`[Enrich] Context Length before cleaning: ${combinedContext.length}`);
 
         combinedContext = combinedContext.replace(/política de cookies|termos de uso|todos os direitos reservados/gi, ' ');
 
-        // 5. Groq Inference - Prompt Optimized for Instagram match
+        // 4. Optimization
+        if (combinedContext.length > 15000) {
+            console.log(`[Enrich] Truncating context from ${combinedContext.length} to 15000`);
+            combinedContext = combinedContext.substring(0, 15000) + "\n...[TRUNCATED]";
+        }
+
+        // 4.1 Extract CNPJ and fetch BrasilAPI if found
+        const cnpjRegex = /\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}|\d{14}/;
+        const cnpjMatch = combinedContext.match(cnpjRegex);
+        let brasilApiContext = "";
+        if (cnpjMatch) {
+            const cnpjData = await fetchBrasilAPI(cnpjMatch[0]);
+            if (cnpjData) {
+                brasilApiContext = `\n--- DADOS OFICIAIS DO GOVERNO (BrasilAPI) ---\nRazão Social: ${cnpjData.razao_social}\nSócios Oficiais: ${cnpjData.socios.join(', ')}\nSituação: ${cnpjData.situacao}\n---`;
+            }
+        }
+
+        // 5. Groq Inference - Prompt Optimized for Identity and CNPJ match
         let finalResult: EnrichedData | null = null;
         if (GROQ_API_KEY) {
             const prompt = `
-    Você é um especialista em OSINT. Sua prioridade NÚMERO UM é encontrar o INSTAGRAM e o WHATSAPP/CELULAR do negócio.
+    Você é um investigador OSINT de elite. Sua missão é consolidar a identidade REAL do negócio e de seus proprietários.
 
     Analise os dados abaixo sobre "${businessName}" em "${location}".
 
     DADOS:
-    ${combinedContext || "Nenhum dado adicional encontrado."}
+    ${combinedContext}
+    ${brasilApiContext}
     
     Site: ${website || "Ñ informado"}
 
-    REGRAS DE EXTRAÇÃO:
-    1. INSTAGRAM (CRÍTICO): Procure por links "instagram.com/usuario" ou menções "@usuario". 
-       - O Instagram muitas vezes aparece no rodapé ou cabeçalho do conteúdo raspado.
-       - Se encontrar múltiplos, o mais provável é o oficial da empresa.
-    2. CELULAR/WHATSAPP (CRÍTICO): Procure por padrões (XX) 9XXXX-XXXX. 
-       - Ignore telefones fixos (XX) 3XXX-XXXX para o campo 'phone1' (use para 'phone2').
-       - Se encontrar "WhatsApp: ..." capture imediatamente.
-    3. DONO: Procure nomes associados a Sócio/Fundador. 
+    REGRAS DE INVESTIGAÇÃO:
+    1. IDENTIFICAÇÃO DO DONO (CRÍTICO): 
+       - Se houver dados da BrasilAPI, os nomes em 'Sócios Oficiais' são a VERDADE ABSOLUTA sobre a propriedade legal.
+       - Use os nomes dos sócios para validar perfis de Instagram/LinkedIn encontrados.
+    2. REDES SOCIAIS:
+       - Busque o Instagram oficial da empresa.
+       - Tente encontrar o Instagram ou LinkedIn PESSOAL dos sócios identificados.
+    3. CONTATO: Priorize WhatsApp ou Celular. Separe fixos em 'phone2'.
+    4. CNPJ: Extraia o CNPJ real (14 dígitos).
 
-    VERIFICAÇÃO DE IDENTIDADE (MUITO IMPORTANTE):
-    - O "${businessName}" é a SUA ÚNICA REFERÊNCIA DE IDENTIDADE.
-    - Se "${businessName}" parecer o NOME DE UMA PESSOA (ex: Dra. Joana Silva), a pessoa encontrada DEVE ser exatamente ela.
-    - Se encontrar uma pessoa com o MESMO PRIMEIRO NOME mas SOBRENOME DIFERENTE (ex: encontrou Dra. Joana Souza), ignore-a completamente. É um 'Erro de Identidade'. 
-    - EXTREMO CUIDADO: Não confunda "Jéssica Montbello" com "Jéssica Zanoni" ou qualquer outra Jéssica. Os sobrenomes DEVEM bater.
-    - Compare o nome no "${businessName}" com o nome no perfil de Instagram/LinkedIn. Se os sobrenomes não baterem, retorne null para instagram/linkedin/name.
-    - NÃO associe perfis de concorrentes ou outras pessoas da mesma região apenas por terem nomes similares.
-    - Se tiver dúvida mútua ou os dados parecerem de outra pessoa, retorne null e confidence "low".
+    VERIFICAÇÃO DE IDENTIDADE:
+    - O sobrenome DEVE bater. Se o sócio oficial é "Ricardo Almeida", não aceite um Instagram de "Ricardo Santos".
+    - Se encontrar dados conflitantes, use a BrasilAPI como desempate para nomes e o Firecrawl para contatos.
 
     Responda APENAS JSON:
     {
-      "name": "Nome do Sócio ou null",
-      "role": "Cargo ou null",
-      "phone1": "WhatsApp/Celular Pessoal (Prioridade) ou null",
-      "phone2": "Telefone Fixo ou null",
-      "instagram": "Link COMPLETO do Instagram (https://instagram.com/...) ou null",
-      "linkedin": "URL ou null",
-      "email": "Email ou null",
-      "website": "URL ou null",
-      "cnpj": "CNPJ ou null",
+      "name": "Nome do Sócio Principal ou Administrador",
+      "role": "Cargo (ex: Sócio-Administrador)",
+      "phone1": "WhatsApp/Celular Pessoal",
+      "phone2": "Telefone Fixo/Comercial",
+      "instagram": "https://instagram.com/perfil_empresa_ou_dono",
+      "linkedin": "https://linkedin.com/in/perfil_dono",
+      "email": "Email de contato",
+      "website": "URL oficial",
+      "cnpj": "CNPJ formatado",
+      "partners": ["Lista", "de", "todos", "os", "socios", "oficiais"],
       "confidence": "high" | "medium" | "low"
     }
     `;
@@ -261,7 +295,7 @@ serve(async (req: Request) => {
             finalResult = {
                 name: null, role: null, phone1: null, phone2: null,
                 instagram: null, linkedin: null, email: null,
-                website: website || null, cnpj: null, confidence: "low"
+                website: website || null, cnpj: null, partners: null, confidence: "low"
             };
         }
 

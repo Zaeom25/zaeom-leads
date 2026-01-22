@@ -639,9 +639,10 @@ function DashboardContent() {
       } else {
         addToast("Não encontramos novas informações.", 'info');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Enrichment failed:", error);
-      addToast("Erro no enriquecimento.", 'error');
+      const errorMsg = error.message || "Erro no enriquecimento.";
+      addToast(errorMsg === "Insufficient credits" ? "Créditos de IA insuficientes." : errorMsg, 'error');
     } finally {
       setIsSearchLoading(false);
       setSearchStatus('');

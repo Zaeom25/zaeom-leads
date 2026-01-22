@@ -43,7 +43,8 @@ export const AdminPanel: React.FC = () => {
         serper: '',
         groq: '',
         firecrawl: '',
-        gemini: ''
+        gemini: '',
+        tavily: ''
     });
     const [showKey, setShowKey] = useState<Record<string, boolean>>({});
     const [savingKeys, setSavingKeys] = useState(false);
@@ -933,6 +934,28 @@ export const AdminPanel: React.FC = () => {
                                             className="absolute right-5 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary transition-colors"
                                         >
                                             {showKey.firecrawl ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Tavily Key */}
+                                <div className="group/input">
+                                    <label className="block text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-3 ml-1 opacity-70">Tavily Search (AI Investigation)</label>
+                                    <div className="relative">
+                                        <Icons.Search className="absolute left-5 top-1/2 -translate-y-1/2 text-primary opacity-30" size={18} />
+                                        <input
+                                            type={showKey.tavily ? 'text' : 'password'}
+                                            value={apiKeys.tavily}
+                                            onChange={e => setApiKeys({ ...apiKeys, tavily: e.target.value })}
+                                            className="w-full pl-14 pr-14 py-4 rounded-2xl border-2 border-white/5 bg-background-card/50 text-text-primary focus:border-primary/50 focus:bg-background-card outline-none transition-all text-sm font-bold placeholder:text-text-secondary/20 shadow-inner"
+                                            placeholder="Insira sua chave Tavily..."
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowKey({ ...showKey, tavily: !showKey.tavily })}
+                                            className="absolute right-5 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary transition-colors"
+                                        >
+                                            {showKey.tavily ? <Icons.EyeOff size={18} /> : <Icons.Eye size={18} />}
                                         </button>
                                     </div>
                                 </div>

@@ -22,17 +22,20 @@ export const detectiveEnrichment = async (
         });
 
         if (error) {
-            console.error("Edge Function Error:", error);
+            console.error("❌ Edge Function Error Details:", error);
+            // Check if it's a known error from the function response
+            if (error.message) throw new Error(error.message);
             throw error;
         }
 
         if (onStatusUpdate) onStatusUpdate("Inteligência consolidada com sucesso.");
-        console.log("Enriched Data from Edge:", data);
+        console.log("✅ Enriched Data from Edge:", data);
 
         return data;
 
-    } catch (error) {
-        console.error("Cascade Enrichment failed:", error);
-        return null;
+    } catch (error: any) {
+        console.error("🛑 Cascade Enrichment failed:", error);
+        // Toast will handle the display, but we log the full error here
+        throw error;
     }
 };
