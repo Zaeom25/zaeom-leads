@@ -1648,14 +1648,14 @@ export const LeadDetailsDialog: React.FC<LeadDetailsDialogProps> = ({
                                         <button
                                             onClick={handleEnrichClick}
                                             disabled={isEnriching}
-                                            className="flex items-center justify-center gap-3 w-full px-6 py-3 rounded-2xl bg-gradient-cta text-background-main hover:scale-[1.02] active:scale-95 transition-all text-[11px] font-bold uppercase tracking-widest shadow-[0_10px_30px_rgba(57,242,101,0.2)] hover:shadow-primary/40 group/btn"
+                                            className="flex items-center justify-center gap-3 w-full px-5 py-3.5 rounded-2xl bg-gradient-cta text-background-main hover:scale-[1.02] active:scale-95 transition-all text-[11px] font-black uppercase tracking-widest shadow-[0_10px_30px_rgba(57,242,101,0.2)] hover:shadow-primary/40 group/btn whitespace-nowrap"
                                         >
                                             {isEnriching ? (
-                                                <Icons.Loader2 size={18} className="animate-spin" strokeWidth={3} />
+                                                <Icons.Loader2 size={16} className="animate-spin" strokeWidth={3} />
                                             ) : (
-                                                <Icons.Sparkles size={18} strokeWidth={3} />
+                                                <Icons.Wand2 size={16} strokeWidth={3} className="group-hover/btn:rotate-12 transition-transform duration-300" />
                                             )}
-                                            ENRIQUECER DADOS
+                                            <span>ENRIQUECER COM IA</span>
                                         </button>
                                     </div>
                                 </div>

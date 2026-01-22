@@ -18,7 +18,7 @@ interface NewLeadDialogProps {
 
 export const NewLeadDialog: React.FC<NewLeadDialogProps> = ({ isOpen, onClose, onLeadAdded, leadToEdit, availableCategories = [] }) => {
     useScrollLock(isOpen);
-    const { user, role } = useAuth();
+    const { user, profile, role } = useAuth();
     const { addToast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -164,7 +164,8 @@ export const NewLeadDialog: React.FC<NewLeadDialogProps> = ({ isOpen, onClose, o
                     addedAt: Date.now(),
                     tags: [],
                     location: leadData.location || 'Manual Entry',
-                    user_id: user.id
+                    user_id: user.id,
+                    organization_id: profile?.organization_id
                 };
 
                 const { error } = await supabase.from('leads').insert([newLead]);

@@ -427,7 +427,8 @@ function DashboardContent() {
       ...cleanLead,
       source: 'ai_finder' as const,
       status: LeadStatus.NEW,
-      user_id: user.id
+      user_id: user.id,
+      organization_id: profile?.organization_id
     };
 
     // Check if lead already exists for this user (Client-side check first for speed)
@@ -698,7 +699,7 @@ function DashboardContent() {
       if (!tagDef && user) {
         const { data: newDef, error: defError } = await supabase
           .from('tag_definitions')
-          .insert([{ name: tagName, color: tagColor, user_id: user.id }])
+          .insert([{ name: tagName, color: tagColor, organization_id: profile?.organization_id }])
           .select()
           .single();
         if (!defError && newDef) {
