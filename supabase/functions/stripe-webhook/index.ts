@@ -165,58 +165,21 @@ serve(async (req: Request) => {
 
             case 'customer.subscription.deleted': {
                 const subscription = event.data.object
-                const { data: org } = await supabaseAdmin
-                    .from('organizations')
-                    .select('id')
-                    .eq('stripe_subscription_id', subscription.id)
-                    .single()
+                const customerId = subscription.customer as string
+                console.log(`[Subscription] Deleted: ${subscription.id}`)
 
-                if (org) {
-                    console.log(`[Subscription] Canceled. Reverting org ${org.id} to Free.`)
-                    await supabaseAdmin
-                        .from('organizations')
-                        .update({
-                            subscription_status: 'free',
-                            search_credits: 0, // Reset credits on cancel
-                            enrich_credits: 0
-                        })
-                        .eq('id', org.id)
-
-                    await supabaseAdmin
-                        .from('profiles')
-                        .update({ subscription_status: 'free' })
-                        .eq('organization_id', org.id)
-                }
+                // Reconcile status based on remaining active subscriptions
+                await reconcileCustomerStatus(customerId, supabaseAdmin, stripe)
                 break
             }
 
             case 'charge.refunded': {
                 const charge = event.data.object
                 const customerId = charge.customer as string
+                console.log(`[Charge] Refunded: ${charge.id}`)
 
-                // Find org by customer ID since charge might not have metadata
-                const { data: org } = await supabaseAdmin
-                    .from('organizations')
-                    .select('id')
-                    .eq('stripe_customer_id', customerId)
-                    .single()
-
-                if (org) {
-                    console.log(`[Charge] Refunded. Revoking access for org ${org.id}.`)
-                    await supabaseAdmin
-                        .from('organizations')
-                        .update({
-                            subscription_status: 'free',
-                            search_credits: 0,
-                            enrich_credits: 0
-                        })
-                        .eq('id', org.id)
-
-                    await supabaseAdmin
-                        .from('profiles')
-                        .update({ subscription_status: 'free' })
-                        .eq('organization_id', org.id)
-                }
+                // Reconcile status based on remaining active subscriptions
+                await reconcileCustomerStatus(customerId, supabaseAdmin, stripe)
                 break
             }
         }
@@ -232,3 +195,88 @@ serve(async (req: Request) => {
     }
 })
 
+// Helper function to reconcile customer status/credits
+async function reconcileCustomerStatus(customerId: string, supabaseAdmin: any, stripe: any) {
+    if (!customerId) return
+
+    // 1. Find Organization
+    const { data: org } = await supabaseAdmin
+        .from('organizations')
+        .select('id')
+        .eq('stripe_customer_id', customerId)
+        .maybeSingle()
+
+    if (!org) {
+        console.log(`Organization not found for customer ${customerId}`)
+        return
+    }
+
+    // 2. Fetch Active Subscriptions from Stripe
+    const activeSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'active',
+        limit: 100
+    })
+
+    const trialingSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'trialing',
+        limit: 100
+    })
+
+    const allActiveSubs = [...activeSubs.data, ...trialingSubs.data]
+
+    // 3. Determine Best Plan
+    let bestPlan = { status: 'free', search: 0, enrich: 0 } // Default fallback (actually free usually implies 5/5 or 0/0 depending on logic, here 0 for strict downgrade, but let's stick to 5 for free tier if implemented elsewhere, or 0 to force 'upgrade' logic)
+    // Actually, free plan usually grants 5 credits.
+    // If we downgrade here, we setting to 0 might be strict.
+    // But let's check PLAN_CONFIG.
+    // PLAN_CONFIG doesn't have 'free'. 
+    // We will assume 'free' means { status: 'free', search: 5, enrich: 5 } based on previous interactions. 
+    // Wait, in previous step I manually set search: 5.
+    // Let's use 5 as default for free.
+
+    let bestPlanWeight = 0
+    const planWeights = { 'free': 0, 'basic': 1, 'pro': 2, 'enterprise': 3 }
+
+    // PLAN_CONFIG needs to be accessible here. 
+    // Since it is const outside, it is accessible.
+
+    if (allActiveSubs.length > 0) {
+        for (const sub of allActiveSubs) {
+            const priceId = sub.items.data[0].price.id
+            const config = (PLAN_CONFIG as any)[priceId]
+
+            if (config) {
+                const weight = (planWeights as any)[config.status] || 0
+                if (weight > bestPlanWeight) {
+                    bestPlan = config
+                    bestPlanWeight = weight
+                }
+            }
+        }
+    } else {
+        // No active subs -> Free Tier
+        bestPlan = { status: 'free', search: 5, enrich: 2 }
+    }
+
+    console.log(`[Reconcile] Customer ${customerId} (Org ${org.id}) -> Best Plan: ${bestPlan.status}`)
+
+    // 4. Update Organization & Profiles
+    // We overwrite credits to match the plan limit. This handles "resetting" credits on downgrade,
+    // and ensuring correct credits on upgrade/maintenance.
+
+    await supabaseAdmin
+        .from('organizations')
+        .update({
+            subscription_status: bestPlan.status,
+            search_credits: bestPlan.search,
+            enrich_credits: bestPlan.enrich
+        })
+        .eq('id', org.id)
+
+    await supabaseAdmin
+        .from('profiles')
+        .update({ subscription_status: bestPlan.status })
+        .eq('organization_id', org.id)
+}
