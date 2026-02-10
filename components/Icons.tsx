@@ -95,7 +95,14 @@ import {
   GraduationCap,
   Info,
   Save,
-  Shield
+  Shield,
+  Code,
+  XCircle,
+  History,
+  RefreshCw,
+  Webhook,
+  BarChart,
+  Crown
 } from 'lucide-react';
 
 export const Icons = {
@@ -195,7 +202,14 @@ export const Icons = {
   GraduationCap,
   Info,
   Save,
-  Shield
+  Shield,
+  Code,
+  XCircle,
+  History,
+  RefreshCw,
+  Webhook,
+  BarChart,
+  Crown
 };
 
 export type IconName = keyof typeof Icons;

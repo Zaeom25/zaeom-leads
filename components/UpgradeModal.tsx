@@ -10,7 +10,7 @@ interface UpgradeModalProps {
     onUpgrade: () => void;
     type: 'search' | 'enrich';
     reason?: 'depleted' | 'user_action';
-    currentPlan?: 'free' | 'starter' | 'pro';
+    currentPlan?: 'free' | 'start' | 'starter' | 'pro' | 'enterprise';
 }
 
 export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onUpgrade, type, reason = 'depleted', currentPlan = 'free' }) => {
@@ -18,27 +18,8 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onU
     const [loading, setLoading] = React.useState(false);
 
     const handleUpgrade = async () => {
-        setLoading(true);
-        try {
-            let priceId = 'price_1SgtDe00ZRYkYo4m0nxddke1'; // Default Starter (R$ 47)
-            if (currentPlan === 'starter' && reason === 'depleted') {
-                priceId = 'price_1SjBr600ZRYkYo4mDXq74El3';
-            }
-
-            const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-                body: { price_id: priceId },
-            });
-
-            if (error) throw error;
-            if (data?.url) {
-                window.location.href = data.url;
-            }
-        } catch (error: any) {
-            console.error('Upgrade error:', error);
-            alert('Erro ao iniciar upgrade: ' + error.message);
-        } finally {
-            setLoading(false);
-        }
+        // Always redirect to pricing tab for upgrades
+        onUpgrade();
     };
 
     const handleManageSubscription = async () => {
@@ -58,13 +39,13 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onU
     };
 
     const getContent = () => {
-        if (currentPlan === 'starter' && reason === 'depleted') {
+        if ((currentPlan === 'basic' || currentPlan === 'trial') && reason === 'depleted') {
             return {
-                title: 'Créditos Esgotados',
-                description: 'Você atingiu seu limite mensal do Plano Starter.',
-                offer: 'Adicione +50 créditos agora por apenas R$ 20',
-                buttonText: 'Comprar 50 Créditos',
-                icon: <Icons.Zap size={32} className="text-primary" />
+                title: 'Limite Atingido',
+                description: 'Você usou todos os créditos do seu plano.',
+                offer: 'Faça o upgrade para o Plano Profissional e tenha mais poder.',
+                buttonText: 'Ver Plano Profissional',
+                icon: <Icons.TrendingUp size={32} className="text-primary" />
             };
         }
 
@@ -72,8 +53,8 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onU
             return {
                 title: 'Potencialize seus Resultados',
                 description: 'Desbloqueie todo o poder da inteligência artificial.',
-                offer: 'Assine o Plano Starter por R$ 47 e libere 50/50 créditos mensais.',
-                buttonText: 'Fazer Upgrade para Starter',
+                offer: 'Assine o Plano Básico por R$ 297 e libere 150 créditos mensais.',
+                buttonText: 'Fazer Upgrade para Básico',
                 icon: <Icons.Rocket size={32} className="text-primary" />
             };
         }
@@ -81,7 +62,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onU
         return {
             title: `Seus créditos de ${type === 'search' ? 'Busca' : 'IA'} acabaram!`,
             description: 'Você atingiu o limite do seu plano atual.',
-            offer: 'Assine o Plano Starter por R$ 47 para liberar 50/50 créditos mensais.',
+            offer: 'Assine o Plano Básico por R$ 297 para liberar 150 créditos mensais.',
             buttonText: 'Liberar Créditos Agora',
             icon: <Icons.Lock size={32} className="text-primary" />
         };

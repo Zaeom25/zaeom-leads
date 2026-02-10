@@ -6,5 +6,9 @@
             "deno.ns"
         ]
     },
-    "importMap": "import_map.json"
+    "importMap": "import_map.json",
+    "include": [
+        "**/*.ts",
+        "**/*.tsx"
+    ]
 }

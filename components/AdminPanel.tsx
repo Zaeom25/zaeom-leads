@@ -625,10 +625,19 @@ export const AdminPanel: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="p-5">
-                                                <span className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.1em] text-primary bg-primary/5 px-2.5 py-1 rounded-lg border border-primary/20 w-fit">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_#39F265]"></span>
-                                                    Ativo
-                                                </span>
+                                                {(() => {
+                                                    const status = (user as any).organizations?.subscription_status || 'free';
+                                                    const config = (status === 'pro') ? { label: 'PRO', class: 'bg-primary/10 text-primary border-primary/20 shadow-[0_0_15px_rgba(57,242,101,0.1)]' }
+                                                        : (status === 'start') ? { label: 'Start', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' }
+                                                            : (status === 'enterprise') ? { label: 'Enterprise', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' }
+                                                                : { label: 'Gratuito', class: 'bg-white/5 text-text-secondary border-white/10' };
+
+                                                    return (
+                                                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-[0.1em] border ${config.class}`}>
+                                                            {config.label}
+                                                        </span>
+                                                    );
+                                                })()}
                                             </td>
                                             <td className="p-4 text-right">
                                                 {currentUser?.id !== user.id && (

@@ -16,7 +16,7 @@ serve(async (req) => {
         const supabase = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-            { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+            { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } }
         )
 
         const {
@@ -107,9 +107,10 @@ serve(async (req) => {
         })
 
     } catch (error) {
+        console.error('Error creating session:', error);
         return new Response(JSON.stringify({ error: error.message }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
+            status: 200, // Return 200 so client can read the error message in the body
         })
     }
 })

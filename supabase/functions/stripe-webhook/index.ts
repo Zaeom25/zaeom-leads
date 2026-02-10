@@ -7,18 +7,38 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Configuração dos Planos (Price IDs devem ser os mesmos do PricingPage.tsx / Stripe Dashboard)
+// Configuração dos Planos (Price IDs devem ser os mesmos do PricingPage.tsx / Stripe Dashboard)
+// NOTA: Substitua os IDs 'price_...' pelos IDs reais gerados no Stripe.
+// Configuração dos Planos (Price IDs devem ser os mesmos do PricingPage.tsx / Stripe Dashboard)
+// NOTA: IDs atualizados em 10/02/2026
+const PLAN_CONFIG = {
+    // Plano Básico (150/150)
+    'price_1SzMG6PMpeR5cfVrt8QKvx3I': { search: 150, enrich: 150, status: 'basic' }, // Mensal
+    'price_1SzMGlPMpeR5cfVrBSTFrbmD': { search: 150, enrich: 150, status: 'basic' }, // Trimestral
+    'price_1SzMHVPMpeR5cfVrQssImHWQ': { search: 150, enrich: 150, status: 'basic' }, // Anual
+
+    // Plano Profissional (400/400)
+    'price_1SzMIbPMpeR5cfVrIDfZM2Bl': { search: 400, enrich: 400, status: 'pro' }, // Mensal
+    'price_1SzMJ5PMpeR5cfVrrR3Sshqw': { search: 400, enrich: 400, status: 'pro' }, // Trimestral
+    'price_1SzMJnPMpeR5cfVrjnDl6y5Y': { search: 400, enrich: 400, status: 'pro' }, // Anual
+
+    // Plano Enterprise (1000/1000)
+    'price_1SzMNDPMpeR5cfVroAJzRdnr': { search: 1000, enrich: 1000, status: 'enterprise' }, // Mensal
+    'price_1SzMNuPMpeR5cfVrYBezxNT5': { search: 1000, enrich: 1000, status: 'enterprise' }, // Trimestral
+    'price_1SzMORPMpeR5cfVr65uI4xHV': { search: 1000, enrich: 1000, status: 'enterprise' }, // Anual
+
+    // Créditos extras (Legacy ou Avulso)
+    'price_extra_credits': { search: 50, enrich: 0, status: null }
+}
+
 serve(async (req: Request) => {
-    // Handle CORS
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
     }
 
     const signature = req.headers.get('Stripe-Signature')
-
-    if (!signature) {
-        console.error('No Stripe-Signature header')
-        return new Response('No signature', { status: 400 })
-    }
+    if (!signature) return new Response('No signature', { status: 400 })
 
     try {
         const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
@@ -31,10 +51,7 @@ serve(async (req: Request) => {
         let event
 
         try {
-            if (!webhookSecret) {
-                console.error('STRIPE_WEBHOOK_SECRET is not set')
-                throw new Error('STRIPE_WEBHOOK_SECRET is not set')
-            }
+            if (!webhookSecret) throw new Error('STRIPE_WEBHOOK_SECRET is not set')
             event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
         } catch (err: any) {
             console.error(`⚠️ Webhook signature verification failed: ${err.message}`)
@@ -46,68 +63,77 @@ serve(async (req: Request) => {
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         )
 
-        console.log(`[Webhook] Processing event type: ${event.type}`)
+        console.log(`[Webhook] Processing event: ${event.type}`)
 
         switch (event.type) {
             case 'checkout.session.completed': {
                 const session = event.data.object
                 const orgId = session.metadata?.organization_id
-                console.log(`[Checkout] Session ID: ${session.id}, Org ID: ${orgId}, Mode: ${session.mode}`)
 
                 if (!orgId) {
-                    console.error('[Checkout] No organization_id in session metadata')
+                    console.error('[Checkout] No organization_id in metadata')
+                    break
+                }
+
+                const lineItems = await stripe.checkout.sessions.listLineItems(session.id)
+                const priceId = lineItems.data[0]?.price?.id as keyof typeof PLAN_CONFIG
+                const config = PLAN_CONFIG[priceId]
+
+                if (!config) {
+                    console.warn(`[Checkout] Unknown Price ID: ${priceId}`)
                     break
                 }
 
                 if (session.mode === 'subscription') {
-                    console.log(`[Checkout] Awarding credits and setting PRO for org: ${orgId}`)
-                    // Award 50/50 credits for new subscription
-                    const { error: rpcError } = await supabaseAdmin.rpc('add_credits', {
-                        org_id_p: orgId,
-                        search_amount: 50,
-                        enrich_amount: 50
-                    })
-                    if (rpcError) console.error(`[Checkout] RPC add_credits error: ${rpcError.message}`)
+                    console.log(`[Checkout] Activating plan ${config.status} for org: ${orgId}`)
 
-                    const { error: orgError } = await supabaseAdmin
+                    // 1. Award Credits
+                    await supabaseAdmin.rpc('add_credits', {
+                        org_id_p: orgId,
+                        search_amount: config.search,
+                        enrich_amount: config.enrich
+                    })
+
+                    // 2. Update Org Status
+                    await supabaseAdmin
                         .from('organizations')
                         .update({
-                            subscription_status: 'pro',
+                            subscription_status: config.status,
                             stripe_customer_id: session.customer as string,
                             stripe_subscription_id: session.subscription as string
                         })
                         .eq('id', orgId)
-                    if (orgError) console.error(`[Checkout] Org update error: ${orgError.message}`)
 
-                    const { error: profError } = await supabaseAdmin
+                    // 3. Update Profiles in the same Org
+                    await supabaseAdmin
                         .from('profiles')
-                        .update({ subscription_status: 'pro' })
+                        .update({ subscription_status: config.status })
                         .eq('organization_id', orgId)
-                    if (profError) console.error(`[Checkout] Profile update error: ${profError.message}`)
-                }
-                else if (session.mode === 'payment') {
-                    console.log(`[Checkout] Payment mode, checking price ID...`)
-                    const lineItems = await stripe.checkout.sessions.listLineItems(session.id)
-                    const priceId = lineItems.data[0]?.price?.id
-                    console.log(`[Checkout] Price ID: ${priceId}`)
 
-                    if (priceId === 'price_1SjBr600ZRYkYo4mDXq74El3') {
-                        console.log(`[Checkout] Awarding 50 search credits for org: ${orgId}`)
-                        const { error: rpcError } = await supabaseAdmin.rpc('add_credits', {
-                            org_id_p: orgId,
-                            search_amount: 50,
-                            enrich_amount: 0
-                        })
-                        if (rpcError) console.error(`[Checkout] RPC add_credits error: ${rpcError.message}`)
-                    }
+                } else if (session.mode === 'payment' && priceId === 'price_extra_credits') {
+                    console.log(`[Checkout] Adding extra credits to org: ${orgId}`)
+                    await supabaseAdmin.rpc('add_credits', {
+                        org_id_p: orgId,
+                        search_amount: config.search,
+                        enrich_amount: 0
+                    })
                 }
                 break
             }
 
-            case 'charge.refunded': {
-                const charge = event.data.object
-                const customerId = charge.customer as string
-                console.log(`[Refund] Charge ID: ${charge.id}, Customer: ${customerId}`)
+            case 'invoice.payment_succeeded': {
+                const invoice = event.data.object
+                // Ignore 'subscription_create' because checkout.session.completed handles the first payment/setup.
+                // We only want to handle renewals ('subscription_cycle') and updates ('subscription_update').
+                if (!['subscription_cycle', 'subscription_update'].includes(invoice.billing_reason)) break
+
+                const customerId = invoice.customer as string
+                const subscriptionId = invoice.subscription as string
+                const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+                const priceId = subscription.items.data[0].price.id as keyof typeof PLAN_CONFIG
+                const config = PLAN_CONFIG[priceId]
+
+                if (!config) break
 
                 const { data: org } = await supabaseAdmin
                     .from('organizations')
@@ -115,65 +141,30 @@ serve(async (req: Request) => {
                     .eq('stripe_customer_id', customerId)
                     .single()
 
-                if (org) {
-                    console.log(`[Refund] Updating org ${org.id} to REFUNDED status`)
+                if (org && config.status) {
+                    console.log(`[Invoice] Renewing credits for plan ${config.status} to org: ${org.id}`)
+
+                    // Reset or Add credits (Usually monthly plans reset to the limit)
+                    // We use update here to SET the credits to the plan's limit for the new month
                     await supabaseAdmin
                         .from('organizations')
                         .update({
-                            search_credits: 0,
-                            enrich_credits: 0,
-                            subscription_status: 'refunded'
+                            search_credits: config.search,
+                            enrich_credits: config.enrich,
+                            subscription_status: config.status
                         })
                         .eq('id', org.id)
 
                     await supabaseAdmin
                         .from('profiles')
-                        .update({ subscription_status: 'refunded' })
+                        .update({ subscription_status: config.status })
                         .eq('organization_id', org.id)
-                } else {
-                    console.warn(`[Refund] No organization found for customer ${customerId}`)
-                }
-                break
-            }
-
-            case 'invoice.payment_succeeded': {
-                const invoice = event.data.object
-                console.log(`[Invoice] Reason: ${invoice.billing_reason}, Customer: ${invoice.customer}`)
-
-                // Handle both renewals, creations, and updates
-                if (['subscription_cycle', 'subscription_create', 'subscription_update'].includes(invoice.billing_reason)) {
-                    const customerId = invoice.customer as string
-                    const { data: org } = await supabaseAdmin
-                        .from('organizations')
-                        .select('id')
-                        .eq('stripe_customer_id', customerId)
-                        .single()
-
-                    if (org) {
-                        console.log(`[Invoice] Ensuring PRO status and refreshing credits for org: ${org.id}`)
-                        await supabaseAdmin
-                            .from('organizations')
-                            .update({
-                                search_credits: 50,
-                                enrich_credits: 50,
-                                subscription_status: 'pro'
-                            })
-                            .eq('id', org.id)
-
-                        await supabaseAdmin
-                            .from('profiles')
-                            .update({ subscription_status: 'pro' })
-                            .eq('organization_id', org.id)
-                    } else {
-                        console.warn(`[Invoice] No organization found for customer ${customerId}`)
-                    }
                 }
                 break
             }
 
             case 'customer.subscription.deleted': {
                 const subscription = event.data.object
-                console.log(`[Subscription] DELETED: ${subscription.id}`)
                 const { data: org } = await supabaseAdmin
                     .from('organizations')
                     .select('id')
@@ -181,10 +172,14 @@ serve(async (req: Request) => {
                     .single()
 
                 if (org) {
-                    console.log(`[Subscription] Setting org ${org.id} to FREE status`)
+                    console.log(`[Subscription] Canceled. Reverting org ${org.id} to Free.`)
                     await supabaseAdmin
                         .from('organizations')
-                        .update({ subscription_status: 'free' })
+                        .update({
+                            subscription_status: 'free',
+                            search_credits: 0, // Reset credits on cancel
+                            enrich_credits: 0
+                        })
                         .eq('id', org.id)
 
                     await supabaseAdmin
@@ -195,30 +190,31 @@ serve(async (req: Request) => {
                 break
             }
 
-            case 'customer.subscription.updated': {
-                const subscription = event.data.object
-                const isPaid = ['active', 'trialing'].includes(subscription.status)
-                const status = isPaid ? 'pro' : 'free'
-                console.log(`[Subscription] UPDATED: ${subscription.id}, Status: ${subscription.status} -> DB Status: ${status}`)
+            case 'charge.refunded': {
+                const charge = event.data.object
+                const customerId = charge.customer as string
 
+                // Find org by customer ID since charge might not have metadata
                 const { data: org } = await supabaseAdmin
                     .from('organizations')
                     .select('id')
-                    .eq('stripe_customer_id', subscription.customer as string)
+                    .eq('stripe_customer_id', customerId)
                     .single()
 
                 if (org) {
+                    console.log(`[Charge] Refunded. Revoking access for org ${org.id}.`)
                     await supabaseAdmin
                         .from('organizations')
                         .update({
-                            subscription_status: status,
-                            stripe_subscription_id: subscription.id
+                            subscription_status: 'free',
+                            search_credits: 0,
+                            enrich_credits: 0
                         })
                         .eq('id', org.id)
 
                     await supabaseAdmin
                         .from('profiles')
-                        .update({ subscription_status: status })
+                        .update({ subscription_status: 'free' })
                         .eq('organization_id', org.id)
                 }
                 break
@@ -231,7 +227,7 @@ serve(async (req: Request) => {
         })
 
     } catch (err: any) {
-        console.error(`[Webhook] CRITICAL ERROR: ${err.message}`)
+        console.error(`[Webhook] Error: ${err.message}`)
         return new Response(err.message, { status: 400 })
     }
 })

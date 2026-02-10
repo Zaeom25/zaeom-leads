@@ -24,6 +24,7 @@ import { ProfileSettingsDialog } from './components/ProfileSettingsDialog';
 import { ConfirmModal } from './components/ConfirmModal';
 import { WalletDashboard } from './components/WalletDashboard';
 import { HistoryPanel } from './components/HistoryPanel';
+import { PricingPage } from './components/PricingPage';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider, useToast } from './contexts/ToastContext';
@@ -82,7 +83,7 @@ function DashboardContent() {
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [searchProgress, setSearchProgress] = useState(0);
   const [searchStatus, setSearchStatus] = useState('');
-  const [activeTab, setActiveTab] = useState<'finder' | 'kanban' | 'admin' | 'portfolio' | 'landing' | 'history'>('kanban');
+  const [activeTab, setActiveTab] = useState<'finder' | 'kanban' | 'admin' | 'portfolio' | 'landing' | 'history' | 'pricing'>('kanban');
 
   // Admin: Map user_id to Initials
   const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
@@ -964,6 +965,16 @@ function DashboardContent() {
 
             </>
           )}
+
+          <button
+            onClick={() => setActiveTab('pricing')}
+            className={`w-full nav-link group ${activeTab === 'pricing' ? 'active' : ''} ${isSidebarCollapsed ? 'justify-center px-0' : ''}`}
+          >
+            <div className={`p-2 rounded-xl transition-all duration-500 ${activeTab === 'pricing' ? 'bg-primary text-background-main shadow-lg shadow-primary/20 scale-110' : 'bg-white/5 text-text-secondary group-hover:text-primary group-hover:bg-primary/10 group-hover:rotate-6'}`}>
+              <Icons.Zap size={18} strokeWidth={3} />
+            </div>
+            {!isSidebarCollapsed && <span className="hidden lg:block text-[11px] uppercase tracking-[0.2em] font-bold text-left">Planos</span>}
+          </button>
         </nav>
 
         {/* User Credits (SaaS) */}
@@ -972,9 +983,11 @@ function DashboardContent() {
             <div className="p-4 bg-white/5 rounded-2xl border border-white/10 transition-all hover:bg-white/10 group/credits">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-                  {profile?.subscription_status === 'pro' || profile?.subscription_status === 'starter' ? 'Plano Profissional' : 'Plano Gratuito'}
+                  {profile?.subscription_status === 'enterprise' ? 'Plano Enterprise' :
+                    profile?.subscription_status === 'pro' ? 'Plano PRO' :
+                      profile?.subscription_status === 'start' ? 'Plano Start' : 'Plano Gratuito'}
                 </span>
-                {(profile?.subscription_status === 'pro' || profile?.subscription_status === 'starter') && (
+                {(profile?.subscription_status && profile.subscription_status !== 'free' && profile.subscription_status !== 'trial') && (
                   <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">ATIVO</span>
                 )}
               </div>
@@ -984,13 +997,23 @@ function DashboardContent() {
                   <div className="flex justify-between items-center mb-1.5">
                     <span className="text-xs font-medium text-text-secondary">Busca de Leads</span>
                     <span className={`text-xs font-bold ${orgCredits.search > 0 || isAdmin ? 'text-text-primary' : 'text-red-500'}`}>
-                      {isAdmin ? '∞' : `${orgCredits.search}/` + (profile?.subscription_status === 'pro' || profile?.subscription_status === 'starter' ? '50' : '5')}
+                      {isAdmin ? '∞' : `${orgCredits.search}/` + (
+                        profile?.subscription_status === 'enterprise' ? '2500' :
+                          profile?.subscription_status === 'pro' ? '500' :
+                            profile?.subscription_status === 'start' ? '100' : '5'
+                      )}
                     </span>
                   </div>
                   <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary rounded-full transition-all duration-500"
-                      style={{ width: isAdmin ? '100%' : `${Math.min((orgCredits.search / (profile?.subscription_status === 'pro' || profile?.subscription_status === 'starter' ? 50 : 5)) * 100, 100)}%` }}
+                      style={{
+                        width: isAdmin ? '100%' : `${Math.min((orgCredits.search / (
+                          profile?.subscription_status === 'enterprise' ? 2500 :
+                            profile?.subscription_status === 'pro' ? 500 :
+                              profile?.subscription_status === 'start' ? 100 : 5
+                        )) * 100, 100)}%`
+                      }}
                     />
                   </div>
                 </div>
@@ -999,18 +1022,29 @@ function DashboardContent() {
                   <div className="flex justify-between items-center mb-1.5">
                     <span className="text-xs font-medium text-text-secondary">Enriquecimentos</span>
                     <span className={`text-xs font-bold ${orgCredits.enrich > 0 || isAdmin ? 'text-text-primary' : 'text-red-500'}`}>
-                      {isAdmin ? '∞' : `${orgCredits.enrich}/` + (profile?.subscription_status === 'pro' || profile?.subscription_status === 'starter' ? '50' : '3')}
+                      {isAdmin ? '∞' : `${orgCredits.enrich}/` + (
+                        profile?.subscription_status === 'enterprise' ? '1000' :
+                          profile?.subscription_status === 'pro' ? '250' :
+                            profile?.subscription_status === 'start' ? '50' : '2'
+                      )}
                     </span>
                   </div>
                   <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary/40 rounded-full transition-all duration-500"
-                      style={{ width: isAdmin ? '100%' : `${Math.min((orgCredits.enrich / (profile?.subscription_status === 'pro' || profile?.subscription_status === 'starter' ? 50 : 3)) * 100, 100)}%` }}
+                      style={{
+                        width: isAdmin ? '100%' : `${Math.min((orgCredits.enrich / (
+                          profile?.subscription_status === 'enterprise' ? 1000 :
+                            profile?.subscription_status === 'pro' ? 250 :
+                              profile?.subscription_status === 'start' ? 50 : 2
+                        )) * 100, 100)}%`
+                      }}
                     />
                   </div>
                 </div>
 
-                {(profile?.subscription_status !== 'pro' && profile?.subscription_status !== 'starter') && !isAdmin ? (
+                {(!profile?.subscription_status ||
+                  ['free', 'trial'].includes(profile.subscription_status)) && !isAdmin ? (
                   <button
                     onClick={() => {
                       setUpgradeModalType('search');
@@ -1370,6 +1404,10 @@ function DashboardContent() {
         {activeTab === 'admin' && isAdmin && (
           <AdminPanel />
         )}
+
+        {activeTab === 'pricing' && (
+          <PricingPage />
+        )}
       </main>
 
       {/* Mobile Bottom Navigation */}
@@ -1419,7 +1457,7 @@ function DashboardContent() {
         onClose={() => setIsUpgradeModalOpen(false)}
         onUpgrade={() => {
           setIsUpgradeModalOpen(false);
-          // Redirect to pricing removed
+          setActiveTab('pricing');
         }}
         type={upgradeModalType}
         reason={upgradeModalReason}
