@@ -303,14 +303,14 @@ export function PricingPage() {
                         <div className="p-8 pt-4">
                             <button
                                 onClick={() => handleCheckout(plan)}
-                                disabled={!!loading || isCurrentPlan(plan.id)}
-                                className={`w-full ${plan.highlight ? 'bg-gradient-cta shadow-[0_15px_40px_rgba(57,242,101,0.2)] hover:shadow-primary/40' : isCurrentPlan(plan.id) ? 'bg-white/10 opacity-50' : 'bg-white/5 border border-white/10 hover:bg-white/10'} text-background-main font-black uppercase tracking-[0.15em] text-[10px] py-5 rounded-[1.2rem] transform transition-all duration-300 ${!isCurrentPlan(plan.id) ? 'hover:-translate-y-1 active:scale-95' : ''} disabled:opacity-30 flex items-center justify-center gap-3 group`}
+                                disabled={!!loading}
+                                className={`w-full ${plan.highlight ? 'bg-gradient-cta shadow-[0_15px_40px_rgba(57,242,101,0.2)] hover:shadow-primary/40' : isCurrentPlan(plan.id) ? 'bg-white/10 opacity-80 hover:bg-white/20' : 'bg-white/5 border border-white/10 hover:bg-white/10'} text-background-main font-black uppercase tracking-[0.15em] text-[10px] py-5 rounded-[1.2rem] transform transition-all duration-300 ${!isCurrentPlan(plan.id) ? 'hover:-translate-y-1 active:scale-95' : ''} disabled:opacity-30 flex items-center justify-center gap-3 group`}
                             >
                                 {loading === plan.id ? (
                                     <Icons.Loader2 className="animate-spin" size={18} strokeWidth={3} />
                                 ) : (
                                     <span className={plan.highlight ? 'text-background-main' : 'text-text-primary'}>
-                                        {isCurrentPlan(plan.id) ? 'PLANO ATUAL' : plan.buttonText}
+                                        {isCurrentPlan(plan.id) ? 'GERENCIAR ASSINATURA' : plan.buttonText}
                                     </span>
                                 )}
                             </button>

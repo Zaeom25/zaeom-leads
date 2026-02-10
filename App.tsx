@@ -998,7 +998,7 @@ function DashboardContent() {
                 <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
                   {profile?.subscription_status === 'enterprise' ? 'Plano Enterprise' :
                     profile?.subscription_status === 'pro' ? 'Plano PRO' :
-                      profile?.subscription_status === 'start' ? 'Plano Start' : 'Plano Gratuito'}
+                      profile?.subscription_status === 'basic' ? 'Plano Básico' : 'Plano Gratuito'}
                 </span>
                 {(profile?.subscription_status && profile.subscription_status !== 'free' && profile.subscription_status !== 'trial') && (
                   <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">ATIVO</span>
@@ -1013,7 +1013,7 @@ function DashboardContent() {
                       {isAdmin ? '∞' : `${orgCredits.search}/` + (
                         profile?.subscription_status === 'enterprise' ? '2500' :
                           profile?.subscription_status === 'pro' ? '500' :
-                            profile?.subscription_status === 'start' ? '100' : '5'
+                            profile?.subscription_status === 'basic' ? '150' : '5'
                       )}
                     </span>
                   </div>
@@ -1024,7 +1024,7 @@ function DashboardContent() {
                         width: isAdmin ? '100%' : `${Math.min((orgCredits.search / (
                           profile?.subscription_status === 'enterprise' ? 2500 :
                             profile?.subscription_status === 'pro' ? 500 :
-                              profile?.subscription_status === 'start' ? 100 : 5
+                              profile?.subscription_status === 'basic' ? 150 : 5
                         )) * 100, 100)}%`
                       }}
                     />
@@ -1038,7 +1038,7 @@ function DashboardContent() {
                       {isAdmin ? '∞' : `${orgCredits.enrich}/` + (
                         profile?.subscription_status === 'enterprise' ? '1000' :
                           profile?.subscription_status === 'pro' ? '250' :
-                            profile?.subscription_status === 'start' ? '50' : '2'
+                            profile?.subscription_status === 'basic' ? '150' : '2'
                       )}
                     </span>
                   </div>
@@ -1049,7 +1049,7 @@ function DashboardContent() {
                         width: isAdmin ? '100%' : `${Math.min((orgCredits.enrich / (
                           profile?.subscription_status === 'enterprise' ? 1000 :
                             profile?.subscription_status === 'pro' ? 250 :
-                              profile?.subscription_status === 'start' ? 50 : 2
+                              profile?.subscription_status === 'basic' ? 150 : 2
                         )) * 100, 100)}%`
                       }}
                     />

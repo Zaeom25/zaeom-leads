@@ -111,6 +111,40 @@ serve(async (req: Request) => {
             };
         }));
 
+        // --- SAVE HISTORY & CACHE ---
+        if (authHeader) {
+            const supabaseClient = createClient(
+                supabaseUrl,
+                Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+                { global: { headers: { Authorization: authHeader } } }
+            );
+            const { data: { user } } = await supabaseClient.auth.getUser();
+
+            if (user) {
+                const queryKey = `${niche.trim().toLowerCase()}:${location.trim().toLowerCase()}:${page}`;
+
+                // 1. Save to History
+                await supabaseAdmin
+                    .from('user_search_history')
+                    .insert({
+                        user_id: user.id,
+                        niche: niche,
+                        location: location,
+                        result_count: leads.length,
+                        query_key: queryKey
+                    });
+
+                // 2. Save/Update Cache
+                await supabaseAdmin
+                    .from('search_cache')
+                    .upsert({
+                        query_key: queryKey,
+                        json_results: leads,
+                        last_updated: new Date().toISOString()
+                    }, { onConflict: 'query_key' });
+            }
+        }
+
         return new Response(JSON.stringify({ leads, nextStartPage: page + 1 }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
