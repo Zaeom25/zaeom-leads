@@ -165,15 +165,8 @@ export function PricingPage() {
 
             setLoading(plan.id);
 
-            if (userStatus && userStatus !== 'free' && userStatus !== 'trial') {
-                const { data, error } = await supabase.functions.invoke('create-portal-session');
-
-                if (error) throw error;
-                if (!data.url) throw new Error('Erro ao criar sessão do portal');
-
-                window.location.href = data.url;
-                return;
-            }
+            // Removing the forced portal redirect to allow Upgrade/Downgrade/Cycle Switch via Checkout
+            // Existing subscriptions will be handled by the webhook (canceling old ones)
 
             const { data, error } = await supabase.functions.invoke('create-checkout-session', {
                 body: { price_id: priceId },
@@ -310,7 +303,7 @@ export function PricingPage() {
                                     <Icons.Loader2 className="animate-spin" size={18} strokeWidth={3} />
                                 ) : (
                                     <span className={plan.highlight ? 'text-background-main' : 'text-text-primary'}>
-                                        {isCurrentPlan(plan.id) ? 'GERENCIAR ASSINATURA' : plan.buttonText}
+                                        {isCurrentPlan(plan.id) ? 'MUDAR CICLO / RENOVAR' : plan.buttonText}
                                     </span>
                                 )}
                             </button>

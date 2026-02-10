@@ -36,6 +36,10 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ userId, onAddToCRM, 
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
+    // Track added/adding leads state
+    const [addedLeads, setAddedLeads] = useState<Set<number>>(new Set());
+    const [addingLeads, setAddingLeads] = useState<Set<number>>(new Set());
+
     useEffect(() => {
         fetchHistory();
     }, [userId]);
@@ -194,11 +198,45 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ userId, onAddToCRM, 
 
                                 <div className="mt-auto pt-6 border-t border-white/5 flex gap-3 relative z-10">
                                     <button
-                                        onClick={() => onAddToCRM(lead)}
-                                        className="flex-1 btn-primary py-3 rounded-xl group/add"
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                                            if (addedLeads.has(i) || addingLeads.has(i)) return;
+
+                                            setAddingLeads(prev => new Set(prev).add(i));
+                                            try {
+                                                await onAddToCRM(lead);
+                                                setAddedLeads(prev => new Set(prev).add(i));
+                                            } catch (error) {
+                                                console.error('Error adding to CRM:', error);
+                                            } finally {
+                                                setAddingLeads(prev => {
+                                                    const next = new Set(prev);
+                                                    next.delete(i);
+                                                    return next;
+                                                });
+                                            }
+                                        }}
+                                        disabled={addedLeads.has(i) || addingLeads.has(i)}
+                                        className={`flex-1 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-wider ${addedLeads.has(i)
+                                            ? 'bg-green-500/10 text-green-500 border border-green-500/20 cursor-default'
+                                            : addingLeads.has(i)
+                                                ? 'bg-white/5 text-text-secondary cursor-wait border border-white/10'
+                                                : 'btn-primary group/add'
+                                            }`}
                                     >
-                                        <Icons.Plus size={14} strokeWidth={3} className="group-hover/add:rotate-90 transition-transform duration-500" />
-                                        <span>Adicionar</span>
+                                        {addingLeads.has(i) ? (
+                                            <Icons.Loader2 size={14} className="animate-spin" />
+                                        ) : addedLeads.has(i) ? (
+                                            <>
+                                                <Icons.Check size={14} strokeWidth={3} />
+                                                <span>Adicionado</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Icons.Plus size={14} strokeWidth={3} className="group-hover/add:rotate-90 transition-transform duration-500" />
+                                                <span>Adicionar</span>
+                                            </>
+                                        )}
                                     </button>
                                     <a
                                         href={lead.website || '#'}

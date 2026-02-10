@@ -110,6 +110,11 @@ serve(async (req: Request) => {
                         .update({ subscription_status: config.status })
                         .eq('organization_id', orgId)
 
+                    // 4. Cancel previous subscriptions to avoid duplicates (Upgrade/Switch logic)
+                    if (session.subscription && session.customer) {
+                        await cancelPreviousSubscriptions(session.customer as string, session.subscription as string, stripe)
+                    }
+
                 } else if (session.mode === 'payment' && priceId === 'price_extra_credits') {
                     console.log(`[Checkout] Adding extra credits to org: ${orgId}`)
                     await supabaseAdmin.rpc('add_credits', {
@@ -279,4 +284,38 @@ async function reconcileCustomerStatus(customerId: string, supabaseAdmin: any, s
         .from('profiles')
         .update({ subscription_status: bestPlan.status })
         .eq('organization_id', org.id)
+}
+
+// Helper function to cancel previous active subscriptions
+async function cancelPreviousSubscriptions(customerId: string, currentSubscriptionId: string, stripe: any) {
+    console.log(`[Manage] Checking for duplicate subscriptions for customer: ${customerId}`)
+
+    const activeSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'active',
+        limit: 100
+    })
+
+    const trialingSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'trialing',
+        limit: 100
+    })
+
+    const allSubs = [...activeSubs.data, ...trialingSubs.data]
+
+    for (const sub of allSubs) {
+        if (sub.id !== currentSubscriptionId) {
+            console.log(`[Manage] Canceling old subscription: ${sub.id} (New one is ${currentSubscriptionId})`)
+            try {
+                // Cancel immediately. 
+                // We use prorate: true to credit any unused time to the customer balance.
+                await stripe.subscriptions.del(sub.id, {
+                    prorate: true
+                })
+            } catch (err: any) {
+                console.error(`[Manage] Error canceling subscription ${sub.id}:`, err.message)
+            }
+        }
+    }
 }
