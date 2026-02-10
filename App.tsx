@@ -61,9 +61,22 @@ function Dashboard() {
 }
 
 function DashboardContent() {
-  const { user, profile, loading, isPasswordRecovery } = useAuth();
+  const { user, profile, loading, isPasswordRecovery, refreshProfile } = useAuth();
   const { logoUrl, faviconUrl, siteName, loading: brandingLoading } = useBranding();
   const [logoError, setLogoError] = useState(false);
+
+  // Auto-refresh data when user returns to tab (e.g. from Stripe)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        refreshProfile();
+        getCredits().then(setOrgCredits);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user, refreshProfile]);
 
   const { addToast } = useToast();
   const isAdmin = profile?.role === 'admin' || profile?.role === 'staff_admin';

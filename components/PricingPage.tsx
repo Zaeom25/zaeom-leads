@@ -112,13 +112,14 @@ const PLANS: Plan[] = [
 
 export function PricingPage() {
     const [loading, setLoading] = useState<string | null>(null);
-    const { session, userStatus, user } = useAuth();
+    const { session, profile, user } = useAuth();
     const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
 
-    const isSubscribed = userStatus && userStatus !== 'free';
+    const userStatus = profile?.subscription_status;
+    const isSubscribed = userStatus && userStatus !== 'free' && userStatus !== 'trial';
 
     const isCurrentPlan = (planId: string) => {
-        if (!userStatus) return false;
+        if (!userStatus && planId === 'trial') return true; // Default to trial/free
         if (planId === 'trial' && userStatus === 'free') return true;
         return userStatus === planId;
     };
@@ -199,8 +200,9 @@ export function PricingPage() {
         } catch (error: any) {
             console.error('Erro no checkout:', error);
             const msg = error.message || 'Erro desconhecido';
+            const status = error.status ? ` (Status: ${error.status})` : '';
             // Evita alertar o erro genérico se temos um específico
-            alert(`Erro: ${msg}`);
+            alert(`Erro: ${msg}${status}`);
         } finally {
             setLoading(null);
         }
