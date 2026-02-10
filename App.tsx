@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-// import { LandingPage } from './components/LandingPage';
+import { SalesPage } from './components/SalesPage';
 import { OnboardingPage } from './components/OnboardingPage';
 import { motion } from 'framer-motion';
 import { Icons } from './components/Icons';
@@ -37,6 +37,10 @@ import { Login } from './components/Login';
 
 function Dashboard() {
   const { user, profile, loading, isPasswordRecovery } = useAuth();
+
+  if (window.location.pathname === '/lp') {
+    return <SalesPage onLoginClick={() => window.location.href = '/'} />;
+  }
   // const [showLogin, setShowLogin] = useState(false);
 
   if (loading) {
@@ -56,7 +60,7 @@ function Dashboard() {
     return <DashboardContent />;
   }
 
-  // Default: Show Login directly (Landing Page retired)
+  // Default: Show Login
   return <Login />;
 }
 
