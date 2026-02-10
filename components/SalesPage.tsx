@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
+import { DemoAnimation } from './DemoAnimation';
+import { useBranding } from '../contexts/BrandingContext';
+import { sanitizeUrl } from '../utils/urlUtils';
+import DOMPurify from 'dompurify';
 
 interface SalesPageProps {
     onLoginClick: () => void;
 }
 
 export function SalesPage({ onLoginClick }: SalesPageProps) {
+    const { logoUrl, siteName } = useBranding();
     const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
 
     const toggleAccordion = (index: number) => {
@@ -44,11 +49,23 @@ export function SalesPage({ onLoginClick }: SalesPageProps) {
             {/* Navigation */}
             <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-6 transition-all duration-300">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => scrollToSection('hero')}>
-                        <div className="w-10 h-10 rounded-xl bg-gradient-cta flex items-center justify-center font-bold text-primary-foreground shadow-lg shadow-primary/20">
-                            <Icons.Activity size={20} className="text-white" />
-                        </div>
-                        <span className="font-heading font-bold text-xl tracking-tight hidden md:block">Zaeom<span className="text-primary">Leads</span></span>
+                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => scrollToSection('hero')}>
+                        {logoUrl ? (
+                            <img
+                                src={DOMPurify.sanitize(sanitizeUrl(logoUrl))}
+                                alt={siteName}
+                                className="h-10 w-auto object-contain"
+                            />
+                        ) : (
+                            <>
+                                <div className="w-10 h-10 bg-gradient-cta rounded-xl flex items-center justify-center text-background-main font-black shadow-lg shadow-primary/20">
+                                    <Icons.Sparkles size={18} strokeWidth={3} />
+                                </div>
+                                <span className="font-heading font-black text-2xl tracking-tighter text-text-primary italic">
+                                    {siteName.split(' ')[0]} <span className="text-primary not-italic">{siteName.split(' ')[1] || ''}</span>
+                                </span>
+                            </>
+                        )}
                     </div>
 
                     <div className="hidden md:flex items-center gap-8 bg-background-card/50 backdrop-blur-md border border-white/5 px-8 py-3 rounded-full shadow-xl">
@@ -109,7 +126,7 @@ export function SalesPage({ onLoginClick }: SalesPageProps) {
                                 Testar Agora
                             </button>
                             <button
-                                onClick={() => scrollToSection('features')}
+                                onClick={() => scrollToSection('how-it-works')}
                                 className="px-8 py-4 bg-white/5 border border-white/10 rounded-xl text-text-primary font-bold text-sm uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-3 group"
                             >
                                 <Icons.PlayCircle size={18} className="text-text-secondary group-hover:text-primary transition-colors" />
@@ -192,13 +209,13 @@ export function SalesPage({ onLoginClick }: SalesPageProps) {
                 </div>
             </section>
 
-            {/* Social Proof */}
+            {/* Data Sources and Integrations */}
             <section className="py-12 border-y border-white/5 bg-white/[0.02]">
                 <div className="max-w-7xl mx-auto px-6 text-center">
-                    <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-8">Empresas que escalam com Zaeom</p>
-                    <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-                        {['NVIDIA', 'Spotify', 'Slack', 'Intercom', 'Notion'].map((brand, i) => (
-                            <span key={i} className="text-xl font-black text-white">{brand}</span>
+                    <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-8">Fontes de Dados & Integrações</p>
+                    <div className="flex flex-wrap justify-center items-center gap-12 md:gap-20 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
+                        {['Google Maps', 'LinkedIn', 'Receita Federal', 'WhatsApp', 'Instagram', 'Facebook'].map((brand, i) => (
+                            <span key={i} className="text-sm font-black text-white uppercase tracking-widest">{brand}</span>
                         ))}
                     </div>
                 </div>
@@ -303,12 +320,8 @@ export function SalesPage({ onLoginClick }: SalesPageProps) {
                             </div>
                         </div>
 
-                        <div className="relative h-[600px] bg-background-card rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
-                            <div className="absolute inset-0 bg-gradient-cta/5" />
-                            <div className="absolute inset-0 flex items-center justify-center text-text-secondary font-bold uppercase tracking-widest opacity-20 text-center">
-                                Interface Demo<br />Animation Here
-                            </div>
-                            {/* Placeholder for a video or GIF demonstrating the flow */}
+                        <div className="relative h-[600px] flex items-center justify-center">
+                            <DemoAnimation />
                         </div>
                     </div>
                 </div>
@@ -320,52 +333,111 @@ export function SalesPage({ onLoginClick }: SalesPageProps) {
 
                 <div className="max-w-7xl mx-auto text-center relative z-10">
                     <h2 className="text-4xl md:text-5xl font-black mb-6">Investimento Simples.</h2>
-                    <p className="text-text-secondary mb-16">Escolha o plano ideal para o tamanho da sua operação.</p>
+                    <p className="text-text-secondary mb-16 uppercase tracking-widest text-xs font-bold opacity-60">Escolha o plano ideal para o tamanho da sua operação.</p>
 
-                    <div className="grid md:grid-cols-3 gap-8 items-center max-w-5xl mx-auto">
-                        {/* Starter */}
-                        <div className="p-8 bg-background-card border border-white/5 rounded-3xl hover:border-white/10 transition-colors">
-                            <div className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">Starter</div>
-                            <div className="text-4xl font-black mb-2">R$ 297<span className="text-sm font-medium text-text-secondary">/mês</span></div>
-                            <p className="text-xs text-text-secondary mb-8">Para freelancers e iniciantes.</p>
-                            <ul className="space-y-4 mb-8 text-left text-sm text-text-secondary">
-                                <li className="flex items-center gap-3"><Icons.Check size={16} className="text-primary" /> 1.000 Buscas/mês</li>
-                                <li className="flex items-center gap-3"><Icons.Check size={16} className="text-primary" /> 100 Enriquecimentos</li>
-                                <li className="flex items-center gap-3"><Icons.Check size={16} className="text-primary" /> CRM Básico</li>
+                    <div className="grid md:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
+                        {/* Plano Básico */}
+                        <div className="p-10 bg-background-card border border-white/5 rounded-[2.5rem] hover:border-white/10 transition-all duration-300 flex flex-col">
+                            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary mb-6 opacity-60">Plano Básico</div>
+                            <div className="flex items-baseline gap-2 mb-2">
+                                <span className="text-5xl font-black text-text-primary tracking-tighter">R$ 297</span>
+                                <span className="text-text-secondary font-black uppercase tracking-widest text-[10px] opacity-40">/mês</span>
+                            </div>
+                            <p className="text-[10px] font-bold text-text-secondary opacity-40 uppercase tracking-wider mb-6">Cobrado mensalmente</p>
+                            <p className="text-text-secondary text-sm font-bold leading-relaxed opacity-70 mb-10 min-h-[3rem] text-left">
+                                Para autônomos premium, consultores e prestadores B2B.
+                            </p>
+                            <ul className="space-y-5 mb-12 text-left flex-1">
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-text-primary">
+                                    <Icons.Search size={18} className="text-primary/70" /> 150 Buscas de Leads / mês
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-text-primary">
+                                    <Icons.Sparkles size={18} className="text-primary/70" /> 150 Enriquecimentos / mês
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-text-primary">
+                                    <Icons.FileDown size={18} className="text-primary/70" /> Exportação CSV
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-text-primary">
+                                    <Icons.History size={18} className="text-primary/70" /> Histórico de Leads
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-text-primary">
+                                    <Icons.Heart size={18} className="text-primary/70" /> Suporte Padrão
+                                </li>
                             </ul>
-                            <button onClick={onLoginClick} className="w-full py-4 rounded-xl border border-white/10 font-bold text-xs uppercase hover:bg-white/5 transition-colors">Começar</button>
+                            <button onClick={onLoginClick} className="w-full py-5 rounded-2xl bg-white/5 border border-white/10 text-text-primary font-black uppercase tracking-[0.15em] text-[10px] hover:bg-white/10 transition-all">Assinar Básico</button>
                         </div>
 
-                        {/* Pro (Featured) */}
+                        {/* Plano Profissional (Featured) */}
                         <motion.div
-                            initial={{ scale: 0.9 }}
+                            initial={{ scale: 0.95 }}
                             whileInView={{ scale: 1 }}
-                            className="p-10 bg-[#151515] border border-primary/50 rounded-[2.5rem] shadow-2xl shadow-primary/10 relative"
+                            className="p-10 bg-[#111] border-2 border-primary/50 rounded-[2.8rem] shadow-2xl shadow-primary/10 relative flex flex-col transform lg:scale-105"
                         >
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-cta px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest text-background-main shadow-lg shadow-primary/20">Mais Popular</div>
-                            <div className="text-xs font-bold uppercase tracking-widest text-primary mb-4">Profissional</div>
-                            <div className="text-5xl font-black mb-2 text-white">R$ 597<span className="text-sm font-medium text-text-secondary">/mês</span></div>
-                            <p className="text-xs text-text-secondary mb-8">Para times em crescimento.</p>
-                            <ul className="space-y-4 mb-8 text-left text-sm font-medium">
-                                <li className="flex items-center gap-3 text-white"><Icons.Check size={16} className="text-primary" /> 5.000 Buscas/mês</li>
-                                <li className="flex items-center gap-3 text-white"><Icons.Check size={16} className="text-primary" /> 1.000 Enriquecimentos</li>
-                                <li className="flex items-center gap-3 text-white"><Icons.Check size={16} className="text-primary" /> CRM Avançado</li>
-                                <li className="flex items-center gap-3 text-white"><Icons.Check size={16} className="text-primary" /> Exportação CSV</li>
+                            <div className="absolute top-0 right-10 -translate-y-1/2 bg-primary px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-background-main shadow-lg shadow-primary/20">Recomendado</div>
+                            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-6">Plano Profissional</div>
+                            <div className="flex items-baseline gap-2 mb-2">
+                                <span className="text-5xl font-black text-white tracking-tighter">R$ 597</span>
+                                <span className="text-text-secondary font-black uppercase tracking-widest text-[10px] opacity-40">/mês</span>
+                            </div>
+                            <p className="text-[10px] font-bold text-text-secondary opacity-40 uppercase tracking-wider mb-6">Cobrado mensalmente</p>
+                            <p className="text-text-secondary text-sm font-bold leading-relaxed opacity-70 mb-10 min-h-[3rem] text-left">
+                                Para agências, SDRs e times comerciais que precisam de escala.
+                            </p>
+                            <ul className="space-y-5 mb-12 text-left flex-1">
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-white">
+                                    <Icons.Search size={18} className="text-primary" /> 400 Buscas de Leads / mês
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-white">
+                                    <Icons.Sparkles size={18} className="text-primary" /> 400 Enriquecimentos / mês
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-white">
+                                    <Icons.FileDown size={18} className="text-primary" /> Exportação Ilimitada
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-white">
+                                    <Icons.Tag size={18} className="text-primary" /> Tags e Organização
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-white">
+                                    <Icons.Heart size={18} className="text-primary" /> Suporte Prioritário
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-white">
+                                    <Icons.RefreshCw size={18} className="text-primary" /> Reprocessamento de Leads
+                                </li>
                             </ul>
-                            <button onClick={onLoginClick} className="w-full py-4 rounded-xl bg-gradient-cta text-background-main font-bold text-xs uppercase hover:brightness-110 shadow-lg shadow-primary/20 transition-all">Assinar Agora</button>
+                            <button onClick={onLoginClick} className="w-full py-6 rounded-2xl bg-gradient-cta shadow-[0_15px_40px_rgba(57,242,101,0.2)] text-background-main font-black uppercase tracking-[0.15em] text-[10px] hover:brightness-110 active:scale-95 transition-all">Assinar Pro</button>
                         </motion.div>
 
-                        {/* Scale */}
-                        <div className="p-8 bg-background-card border border-white/5 rounded-3xl hover:border-white/10 transition-colors">
-                            <div className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">Scale</div>
-                            <div className="text-4xl font-black mb-2">R$ 900<span className="text-sm font-medium text-text-secondary">/mês</span></div>
-                            <p className="text-xs text-text-secondary mb-8">Para agências e power users.</p>
-                            <ul className="space-y-4 mb-8 text-left text-sm text-text-secondary">
-                                <li className="flex items-center gap-3"><Icons.Check size={16} className="text-primary" /> 15.000 Buscas/mês</li>
-                                <li className="flex items-center gap-3"><Icons.Check size={16} className="text-primary" /> 3.000 Enriquecimentos</li>
-                                <li className="flex items-center gap-3"><Icons.Check size={16} className="text-primary" /> API Access</li>
+                        {/* Plano Enterprise / Scale */}
+                        <div className="p-10 bg-background-card border border-white/5 rounded-[2.5rem] hover:border-white/10 transition-all duration-300 flex flex-col">
+                            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary mb-6 opacity-60">Plano Enterprise / Scale</div>
+                            <div className="flex items-baseline gap-2 mb-2">
+                                <span className="text-5xl font-black text-text-primary tracking-tighter">R$ 900</span>
+                                <span className="text-text-secondary font-black uppercase tracking-widest text-[10px] opacity-40">/mês</span>
+                            </div>
+                            <p className="text-[10px] font-bold text-text-secondary opacity-40 uppercase tracking-wider mb-6">Cobrado mensalmente</p>
+                            <p className="text-text-secondary text-sm font-bold leading-relaxed opacity-70 mb-10 min-h-[3rem] text-left">
+                                Volume, confiança, integração e status para grandes times.
+                            </p>
+                            <ul className="space-y-5 mb-12 text-left flex-1">
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-text-primary">
+                                    <Icons.Search size={18} className="text-primary/70" /> 1.000 Buscas de Leads / mês
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-text-primary">
+                                    <Icons.Sparkles size={18} className="text-primary/70" /> 1.000 Enriquecimentos / mês
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-text-primary">
+                                    <Icons.Users size={18} className="text-primary/70" /> Múltiplos Usuários
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-text-primary">
+                                    <Icons.Webhook size={18} className="text-primary/70" /> Integrações (CRM)
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-text-primary">
+                                    <Icons.BarChart size={18} className="text-primary/70" /> Relatórios Avançados
+                                </li>
+                                <li className="flex items-center gap-4 text-[11px] font-black uppercase tracking-wider text-text-primary">
+                                    <Icons.Crown size={18} className="text-primary/70" /> Suporte Premium / Onboarding
+                                </li>
                             </ul>
-                            <button onClick={onLoginClick} className="w-full py-4 rounded-xl border border-white/10 font-bold text-xs uppercase hover:bg-white/5 transition-colors">Falar com Consultor</button>
+                            <button onClick={onLoginClick} className="w-full py-5 rounded-2xl bg-white/5 border border-white/10 text-text-primary font-black uppercase tracking-[0.15em] text-[10px] hover:bg-white/10 transition-all">Assinar Scale</button>
                         </div>
                     </div>
                 </div>
@@ -432,7 +504,7 @@ export function SalesPage({ onLoginClick }: SalesPageProps) {
                     <a href="#" className="hover:text-primary">Privacidade</a>
                     <a href="#" className="hover:text-primary">Contato</a>
                 </div>
-                <p>© 2026 Zaeom Studio. Feito com energia.</p>
+                <p>© 2026 Zaeom. Todos os direitos reservaos.</p>
             </footer>
         </div>
     );

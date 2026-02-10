@@ -11,6 +11,7 @@ import { sanitizeUrl } from '../utils/urlUtils';
 export const AdminPanel: React.FC = () => {
     const { addToast } = useToast();
     const { user: currentUser, profile: currentProfile } = useAuth();
+    const isSuperAdmin = ['admin', 'staff_admin'].includes(currentProfile?.role || '');
     const [users, setUsers] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
     const [inviteEmail, setInviteEmail] = useState('');
@@ -94,10 +95,24 @@ export const AdminPanel: React.FC = () => {
 
     const fetchUsers = async () => {
         // Fetch profiles with their organization data
-        const { data } = await supabase
+        let query = supabase
             .from('profiles')
             .select('*, organizations(search_credits, enrich_credits)')
             .order('created_at', { ascending: false });
+
+        // If current user is NOT a super admin, ONLY show their own organization members
+        if (!isSuperAdmin) {
+            if (currentProfile?.organization_id) {
+                query = query.eq('organization_id', currentProfile.organization_id);
+            } else {
+                // If they don't have an org for some reason, they shouldn't see anyone (error state)
+                setUsers([]);
+                setLoading(false);
+                return;
+            }
+        }
+
+        const { data } = await query;
 
         if (data) setUsers(data as any[]);
         setLoading(false);
@@ -481,33 +496,35 @@ export const AdminPanel: React.FC = () => {
                         <Icons.Settings className="text-primary" strokeWidth={3} />
                         Painel Admin
                     </h1>
-                    <p className="text-sm font-medium text-text-secondary opacity-70">Configurações globais e gestão de equipe do ecossistema Zaeom</p>
+                    <p className="text-sm font-medium text-text-secondary opacity-70">
+                        {['admin', 'staff_admin'].includes(currentProfile?.role || '')
+                            ? 'Configurações globais e gestão de equipe do ecossistema Zaeom'
+                            : 'Gerencie os membros da sua equipe e convide novos vendedores'}
+                    </p>
                 </div>
 
-                <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 backdrop-blur-md">
-                    <button
-                        onClick={() => setActiveTab('users')}
-                        className={`px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-[0.8rem] transition-all duration-300 ${activeTab === 'users' ? 'bg-gradient-cta text-background-main shadow-lg shadow-primary/20 scale-105' : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
-                    >
-                        Usuários
-                    </button>
-                    {['admin', 'org_owner'].includes(currentProfile?.role || '') && (
-                        <>
-                            <button
-                                onClick={() => setActiveTab('branding')}
-                                className={`px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-[0.8rem] transition-all duration-300 ${activeTab === 'branding' ? 'bg-gradient-cta text-background-main shadow-lg shadow-primary/20 scale-105' : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
-                            >
-                                Branding
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('config')}
-                                className={`px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-[0.8rem] transition-all duration-300 ${activeTab === 'config' ? 'bg-gradient-cta text-background-main shadow-lg shadow-primary/20 scale-105' : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
-                            >
-                                Configurações
-                            </button>
-                        </>
-                    )}
-                </div>
+                {isSuperAdmin && (
+                    <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 backdrop-blur-md">
+                        <button
+                            onClick={() => setActiveTab('users')}
+                            className={`px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-[0.8rem] transition-all duration-300 ${activeTab === 'users' ? 'bg-gradient-cta text-background-main shadow-lg shadow-primary/20 scale-105' : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
+                        >
+                            Usuários
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('branding')}
+                            className={`px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-[0.8rem] transition-all duration-300 ${activeTab === 'branding' ? 'bg-gradient-cta text-background-main shadow-lg shadow-primary/20 scale-105' : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
+                        >
+                            Branding
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('config')}
+                            className={`px-6 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-[0.8rem] transition-all duration-300 ${activeTab === 'config' ? 'bg-gradient-cta text-background-main shadow-lg shadow-primary/20 scale-105' : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
+                        >
+                            Configurações
+                        </button>
+                    </div>
+                )}
             </div>
 
             {activeTab === 'users' ? (
@@ -652,17 +669,19 @@ export const AdminPanel: React.FC = () => {
                                                         {menuOpen === user.id && (
                                                             <div className="absolute right-0 mt-3 w-64 bg-background-card rounded-[1.5rem] shadow-2xl border border-white/10 z-50 animate-fade-in overflow-hidden backdrop-blur-xl">
                                                                 <div className="p-2 space-y-1">
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setSelectedUser(user);
-                                                                            setIsAdjustCreditsOpen(true);
-                                                                            setMenuOpen(null);
-                                                                        }}
-                                                                        className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-text-secondary hover:bg-primary/10 hover:text-primary flex items-center gap-3 transition-all rounded-xl"
-                                                                    >
-                                                                        <Icons.Zap size={16} /> Adicionar Créditos
-                                                                    </button>
-                                                                    {user.role === 'seller' && (
+                                                                    {isSuperAdmin && (
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setSelectedUser(user);
+                                                                                setIsAdjustCreditsOpen(true);
+                                                                                setMenuOpen(null);
+                                                                            }}
+                                                                            className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-text-secondary hover:bg-primary/10 hover:text-primary flex items-center gap-3 transition-all rounded-xl"
+                                                                        >
+                                                                            <Icons.Zap size={16} /> Adicionar Créditos
+                                                                        </button>
+                                                                    )}
+                                                                    {isSuperAdmin && user.role === 'seller' && (
                                                                         <>
                                                                             <button
                                                                                 onClick={() => handleSetRole(user, 'staff_admin')}
@@ -679,7 +698,7 @@ export const AdminPanel: React.FC = () => {
                                                                         </>
                                                                     )}
 
-                                                                    {user.role === 'staff_admin' && (
+                                                                    {isSuperAdmin && user.role === 'staff_admin' && (
                                                                         <>
                                                                             <button
                                                                                 onClick={() => handleSetRole(user, 'seller')}
@@ -696,7 +715,7 @@ export const AdminPanel: React.FC = () => {
                                                                         </>
                                                                     )}
 
-                                                                    {user.role === 'admin' && (
+                                                                    {isSuperAdmin && user.role === 'admin' && (
                                                                         <>
                                                                             <button
                                                                                 onClick={() => handleSetRole(user, 'staff_admin')}

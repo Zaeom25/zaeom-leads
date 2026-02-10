@@ -12,6 +12,7 @@ interface HistoryPanelProps {
     userId: string;
     onAddToCRM: (lead: Lead) => Promise<void>;
     profilesMap: Record<string, string>;
+    pipelineLeads: Lead[];
 }
 
 const SafeDateDisplay = ({ dateStr }: { dateStr: string }) => {
@@ -25,7 +26,7 @@ const SafeDateDisplay = ({ dateStr }: { dateStr: string }) => {
     }
 };
 
-export const HistoryPanel: React.FC<HistoryPanelProps> = ({ userId, onAddToCRM, profilesMap }) => {
+export const HistoryPanel: React.FC<HistoryPanelProps> = ({ userId, onAddToCRM, profilesMap, pipelineLeads }) => {
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
@@ -36,9 +37,17 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ userId, onAddToCRM, 
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
-    // Track added/adding leads state
+    // Track added/adding leads state (local session state)
     const [addedLeads, setAddedLeads] = useState<Set<number>>(new Set());
     const [addingLeads, setAddingLeads] = useState<Set<number>>(new Set());
+
+    // Check if lead is already in CRM (persisted state)
+    const isLeadInCRM = (lead: Lead) => {
+        return pipelineLeads.some(crmLead =>
+            (crmLead.businessName === lead.businessName && crmLead.address === lead.address) ||
+            (crmLead.website && lead.website && crmLead.website === lead.website)
+        );
+    };
 
     useEffect(() => {
         fetchHistory();
@@ -74,10 +83,6 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ userId, onAddToCRM, 
 
             if (error) throw error;
             if (cachedResults?.json_results) {
-                // Mark leads as saved if they are already in CRM? 
-                // For now we just load them. The parent's addToCRM handles duplicate checks.
-                // Ideally we would want to know which are already saved. 
-                // But for simplicity/performance in history, let's just let the user try.
                 setResults(cachedResults.json_results as Lead[]);
             } else {
                 setResults([]);
@@ -111,8 +116,6 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ userId, onAddToCRM, 
                 .eq('id', itemToRemove);
 
             if (error) throw error;
-
-
 
             success('Item removido do histórico com sucesso.');
 
@@ -181,74 +184,79 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ userId, onAddToCRM, 
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {results.map((lead, i) => (
-                            <div key={i} className="bg-background-card p-6 rounded-3xl shadow-sm border border-white/5 hover:border-primary/30 flex flex-col hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 group relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <div className="flex justify-between items-start mb-3 relative z-10">
-                                    <h4 className="font-black text-text-primary truncate mb-1 flex-1 pr-2 uppercase tracking-tight text-lg" title={lead.businessName}>{lead.businessName}</h4>
-                                    {lead.rating && (
-                                        <span className="flex items-center gap-1.5 text-[10px] font-black text-primary bg-primary/10 px-2 py-1 rounded-lg border border-primary/20">
-                                            <Icons.Star size={12} fill="currentColor" /> {lead.rating}
-                                        </span>
-                                    )}
-                                </div>
-                                <p className="text-xs text-text-secondary truncate flex items-center gap-2 mb-6 font-medium opacity-70 relative z-10">
-                                    <Icons.MapPin size={14} className="shrink-0 text-primary/50" /> {lead.address}
-                                </p>
+                        {results.map((lead, i) => {
+                            const isInCRM = isLeadInCRM(lead);
+                            const isAdded = addedLeads.has(i) || isInCRM;
 
-                                <div className="mt-auto pt-6 border-t border-white/5 flex gap-3 relative z-10">
-                                    <button
-                                        onClick={async (e) => {
-                                            e.stopPropagation();
-                                            if (addedLeads.has(i) || addingLeads.has(i)) return;
-
-                                            setAddingLeads(prev => new Set(prev).add(i));
-                                            try {
-                                                await onAddToCRM(lead);
-                                                setAddedLeads(prev => new Set(prev).add(i));
-                                            } catch (error) {
-                                                console.error('Error adding to CRM:', error);
-                                            } finally {
-                                                setAddingLeads(prev => {
-                                                    const next = new Set(prev);
-                                                    next.delete(i);
-                                                    return next;
-                                                });
-                                            }
-                                        }}
-                                        disabled={addedLeads.has(i) || addingLeads.has(i)}
-                                        className={`flex-1 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-wider ${addedLeads.has(i)
-                                            ? 'bg-green-500/10 text-green-500 border border-green-500/20 cursor-default'
-                                            : addingLeads.has(i)
-                                                ? 'bg-white/5 text-text-secondary cursor-wait border border-white/10'
-                                                : 'btn-primary group/add'
-                                            }`}
-                                    >
-                                        {addingLeads.has(i) ? (
-                                            <Icons.Loader2 size={14} className="animate-spin" />
-                                        ) : addedLeads.has(i) ? (
-                                            <>
-                                                <Icons.Check size={14} strokeWidth={3} />
-                                                <span>Adicionado</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Icons.Plus size={14} strokeWidth={3} className="group-hover/add:rotate-90 transition-transform duration-500" />
-                                                <span>Adicionar</span>
-                                            </>
+                            return (
+                                <div key={i} className="bg-background-card p-6 rounded-3xl shadow-sm border border-white/5 hover:border-primary/30 flex flex-col hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 group relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="flex justify-between items-start mb-3 relative z-10">
+                                        <h4 className="font-black text-text-primary truncate mb-1 flex-1 pr-2 uppercase tracking-tight text-lg" title={lead.businessName}>{lead.businessName}</h4>
+                                        {lead.rating && (
+                                            <span className="flex items-center gap-1.5 text-[10px] font-black text-primary bg-primary/10 px-2 py-1 rounded-lg border border-primary/20">
+                                                <Icons.Star size={12} fill="currentColor" /> {lead.rating}
+                                            </span>
                                         )}
-                                    </button>
-                                    <a
-                                        href={lead.website || '#'}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className={`btn-icon !w-14 !h-14 !rounded-[1.25rem] ${!lead.website && 'opacity-20 cursor-not-allowed pointer-events-none'} `}
-                                    >
-                                        <Icons.Globe size={18} />
-                                    </a>
+                                    </div>
+                                    <p className="text-xs text-text-secondary truncate flex items-center gap-2 mb-6 font-medium opacity-70 relative z-10">
+                                        <Icons.MapPin size={14} className="shrink-0 text-primary/50" /> {lead.address}
+                                    </p>
+
+                                    <div className="mt-auto pt-6 border-t border-white/5 flex gap-3 relative z-10">
+                                        <button
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                if (isAdded || addingLeads.has(i)) return;
+
+                                                setAddingLeads(prev => new Set(prev).add(i));
+                                                try {
+                                                    await onAddToCRM(lead);
+                                                    setAddedLeads(prev => new Set(prev).add(i));
+                                                } catch (error) {
+                                                    console.error('Error adding to CRM:', error);
+                                                } finally {
+                                                    setAddingLeads(prev => {
+                                                        const next = new Set(prev);
+                                                        next.delete(i);
+                                                        return next;
+                                                    });
+                                                }
+                                            }}
+                                            disabled={isAdded || addingLeads.has(i)}
+                                            className={`flex-1 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-wider ${isAdded
+                                                ? 'bg-green-500/10 text-green-500 border border-green-500/20 cursor-default'
+                                                : addingLeads.has(i)
+                                                    ? 'bg-white/5 text-text-secondary cursor-wait border border-white/10'
+                                                    : 'btn-primary group/add'
+                                                }`}
+                                        >
+                                            {addingLeads.has(i) ? (
+                                                <Icons.Loader2 size={14} className="animate-spin" />
+                                            ) : isAdded ? (
+                                                <>
+                                                    <Icons.Check size={14} strokeWidth={3} />
+                                                    <span>Adicionado</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Icons.Plus size={14} strokeWidth={3} className="group-hover/add:rotate-90 transition-transform duration-500" />
+                                                    <span>Adicionar</span>
+                                                </>
+                                            )}
+                                        </button>
+                                        <a
+                                            href={lead.website || '#'}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={`btn-icon !w-14 !h-14 !rounded-[1.25rem] ${!lead.website && 'opacity-20 cursor-not-allowed pointer-events-none'} `}
+                                        >
+                                            <Icons.Globe size={18} />
+                                        </a>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

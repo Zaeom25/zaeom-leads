@@ -252,7 +252,7 @@ export function PricingPage() {
                 {PLANS.map((plan) => (
                     <div
                         key={plan.id}
-                        className={`bg-background-card rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden border ${plan.highlight ? 'border-primary/50 ring-2 ring-primary/20' : 'border-white/10'} relative flex flex-col backdrop-blur-xl group transition-all duration-300 hover:scale-[1.02]`}
+                        className={`bg-background-card rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden border ${plan.highlight ? 'border-primary/50 ring-2 ring-primary/20' : 'border-white/10'} relative flex flex-col backdrop-blur-xl group transition-all duration-300 hover:scale-[1.02] ${plan.id === 'trial' && isCurrentPlan(plan.id) ? 'opacity-40 grayscale-[0.5] scale-[0.98]' : ''}`}
                     >
                         {plan.highlight && (
                             <div className="absolute top-0 right-0 p-6">
@@ -296,14 +296,16 @@ export function PricingPage() {
                         <div className="p-8 pt-4">
                             <button
                                 onClick={() => handleCheckout(plan)}
-                                disabled={!!loading}
+                                disabled={!!loading || (plan.id === 'trial' && isCurrentPlan(plan.id))}
                                 className={`w-full ${plan.highlight ? 'bg-gradient-cta shadow-[0_15px_40px_rgba(57,242,101,0.2)] hover:shadow-primary/40' : isCurrentPlan(plan.id) ? 'bg-white/10 opacity-80 hover:bg-white/20' : 'bg-white/5 border border-white/10 hover:bg-white/10'} text-background-main font-black uppercase tracking-[0.15em] text-[10px] py-5 rounded-[1.2rem] transform transition-all duration-300 ${!isCurrentPlan(plan.id) ? 'hover:-translate-y-1 active:scale-95' : ''} disabled:opacity-30 flex items-center justify-center gap-3 group`}
                             >
                                 {loading === plan.id ? (
                                     <Icons.Loader2 className="animate-spin" size={18} strokeWidth={3} />
                                 ) : (
                                     <span className={plan.highlight ? 'text-background-main' : 'text-text-primary'}>
-                                        {isCurrentPlan(plan.id) ? 'MUDAR CICLO / RENOVAR' : plan.buttonText}
+                                        {isCurrentPlan(plan.id)
+                                            ? (plan.id === 'trial' ? 'Plano Atual' : 'MUDAR CICLO / RENOVAR')
+                                            : plan.buttonText}
                                     </span>
                                 )}
                             </button>

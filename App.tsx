@@ -84,6 +84,8 @@ function DashboardContent() {
 
   const { addToast } = useToast();
   const isAdmin = profile?.role === 'admin' || profile?.role === 'staff_admin';
+  const isPaidPlan = ['pro', 'enterprise'].includes(profile?.subscription_status || '');
+  const canAccessAdmin = isAdmin || (profile?.role === 'org_owner' && isPaidPlan);
 
   // Sidebar State
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -967,7 +969,7 @@ function DashboardContent() {
 
 
 
-          {isAdmin && (
+          {canAccessAdmin && (
             <>
               <button
                 onClick={() => setActiveTab('admin')}
@@ -976,7 +978,7 @@ function DashboardContent() {
                 <div className={`p-2 rounded-xl transition-all duration-500 ${activeTab === 'admin' ? 'bg-primary text-background-main shadow-lg shadow-primary/20 scale-110' : 'bg-white/5 text-text-secondary group-hover:text-primary group-hover:bg-primary/10 group-hover:rotate-6'}`}>
                   <Icons.Settings size={18} strokeWidth={3} />
                 </div>
-                {!isSidebarCollapsed && <span className="hidden lg:block text-[11px] uppercase tracking-[0.2em] font-bold text-left">Administração</span>}
+                {!isSidebarCollapsed && <span className="hidden lg:block text-[11px] uppercase tracking-[0.2em] font-bold text-left">{isAdmin ? 'Administração' : 'Minha Equipe'}</span>}
               </button>
 
 
@@ -1239,6 +1241,7 @@ function DashboardContent() {
             userId={user.id}
             onAddToCRM={addToPipeline}
             profilesMap={profilesMap} // Passing map just in case we need it for UI consistency
+            pipelineLeads={pipelineLeads}
           />
         )}
 
@@ -1418,7 +1421,7 @@ function DashboardContent() {
           </div>
         )}
 
-        {activeTab === 'admin' && isAdmin && (
+        {activeTab === 'admin' && canAccessAdmin && (
           <AdminPanel />
         )}
 

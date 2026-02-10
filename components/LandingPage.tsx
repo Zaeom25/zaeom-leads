@@ -331,25 +331,26 @@ export function LandingPage({ onLoginClick }: LandingPageProps) {
                         className="bg-background-card rounded-[2.5rem] p-8 md:p-12 border border-white/10 shadow-2xl relative"
                     >
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-cta px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-button-glow">
-                            Oferta Limitada
+                            Recomendado
                         </div>
 
                         <div className="text-center mb-8">
-                            <h3 className="text-2xl font-bold mb-2 text-text-primary">Zaeom Pro</h3>
+                            <h3 className="text-2xl font-bold mb-2 text-text-primary">Plano Profissional</h3>
                             <div className="flex justify-center items-end gap-1 mb-4">
-                                <span className="text-5xl font-black text-text-primary">R$ 47</span>
+                                <span className="text-5xl font-black text-text-primary">R$ 597</span>
                                 <span className="text-text-secondary font-medium mb-1">/mês</span>
                             </div>
-                            <p className="text-text-secondary text-sm">Acesso completo a todas as ferramentas de prospecção e CRM.</p>
+                            <p className="text-text-secondary text-sm">Para agências, SDRs e times comerciais que precisam de escala.</p>
                         </div>
 
                         <div className="space-y-4 mb-10">
                             {[
-                                'Buscas Ilimitadas',
-                                'Enriquecimento de Leads con IA',
-                                'CRM Integrado (Kanban)',
-                                'Exportação de Dados',
-                                'Suporte Prioritário'
+                                '400 Buscas de Leads / mês',
+                                '400 Enriquecimentos / mês',
+                                'Exportação Ilimitada',
+                                'Tags e Organização',
+                                'Suporte Prioritário',
+                                'Reprocessamento de Leads'
                             ].map((feature, i) => (
                                 <div key={i} className="flex items-center gap-3 text-text-secondary text-sm">
                                     <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
@@ -360,14 +361,12 @@ export function LandingPage({ onLoginClick }: LandingPageProps) {
                             ))}
                         </div>
 
-                        <a
-                            href="https://buy.stripe.com/test_aEU3cd8H148a0SI7ss"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <button
+                            onClick={onLoginClick}
                             className="block w-full text-center py-4 bg-gradient-cta rounded-xl text-white font-bold uppercase tracking-widest hover:brightness-110 transition-all shadow-button-glow hover:shadow-lg hover:-translate-y-1"
                         >
                             Assinar Agora
-                        </a>
+                        </button>
 
                         <p className="text-center text-[10px] text-text-secondary mt-6 uppercase tracking-wider">
                             7 Dias de Garantia • Cancele a qualquer momento
