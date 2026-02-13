@@ -14,19 +14,19 @@ const corsHeaders = {
 // NOTA: IDs atualizados em 10/02/2026
 const PLAN_CONFIG = {
     // Plano Básico (150/150)
-    'price_1SzMG6PMpeR5cfVrt8QKvx3I': { search: 150, enrich: 150, status: 'basic' }, // Mensal
-    'price_1SzMGlPMpeR5cfVrBSTFrbmD': { search: 150, enrich: 150, status: 'basic' }, // Trimestral
-    'price_1SzMHVPMpeR5cfVrQssImHWQ': { search: 150, enrich: 150, status: 'basic' }, // Anual
+    'price_1T0OqQPMpeR5cfVrlqYtukAX': { search: 150, enrich: 150, status: 'basic' }, // Mensal
+    'price_1T0OqRPMpeR5cfVrTIkv3B5S': { search: 150, enrich: 150, status: 'basic' }, // Trimestral
+    'price_1T0OqRPMpeR5cfVrFERi7cry': { search: 150, enrich: 150, status: 'basic' }, // Anual
 
     // Plano Profissional (400/400)
-    'price_1SzMIbPMpeR5cfVrIDfZM2Bl': { search: 400, enrich: 400, status: 'pro' }, // Mensal
-    'price_1SzMJ5PMpeR5cfVrrR3Sshqw': { search: 400, enrich: 400, status: 'pro' }, // Trimestral
-    'price_1SzMJnPMpeR5cfVrjnDl6y5Y': { search: 400, enrich: 400, status: 'pro' }, // Anual
+    'price_1T0OqSPMpeR5cfVr499j0tbR': { search: 400, enrich: 400, status: 'pro' }, // Mensal
+    'price_1T0OqSPMpeR5cfVrUq1g5XDw': { search: 400, enrich: 400, status: 'pro' }, // Trimestral
+    'price_1T0OqTPMpeR5cfVrLnrMx2Kv': { search: 400, enrich: 400, status: 'pro' }, // Anual
 
     // Plano Enterprise (1000/1000)
-    'price_1SzMNDPMpeR5cfVroAJzRdnr': { search: 1000, enrich: 1000, status: 'enterprise' }, // Mensal
-    'price_1SzMNuPMpeR5cfVrYBezxNT5': { search: 1000, enrich: 1000, status: 'enterprise' }, // Trimestral
-    'price_1SzMORPMpeR5cfVr65uI4xHV': { search: 1000, enrich: 1000, status: 'enterprise' }, // Anual
+    'price_1T0OqTPMpeR5cfVrqfdp3NT6': { search: 1000, enrich: 1000, status: 'enterprise' }, // Mensal
+    'price_1T0OqUPMpeR5cfVr3NcZjIWU': { search: 1000, enrich: 1000, status: 'enterprise' }, // Trimestral
+    'price_1T0OqUPMpeR5cfVrWAFrth0g': { search: 1000, enrich: 1000, status: 'enterprise' }, // Anual
 
     // Créditos extras (Legacy ou Avulso)
     'price_extra_credits': { search: 50, enrich: 0, status: null }

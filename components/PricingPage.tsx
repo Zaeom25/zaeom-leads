@@ -54,9 +54,9 @@ const PLANS: Plan[] = [
         buttonText: 'ASSINAR BÁSICO',
         price: { monthly: 297, quarterly: 807, yearly: 2748 },
         priceIds: {
-            monthly: 'price_1SzMG6PMpeR5cfVrt8QKvx3I',
-            quarterly: 'price_1SzMGlPMpeR5cfVrBSTFrbmD',
-            yearly: 'price_1SzMHVPMpeR5cfVrQssImHWQ'
+            monthly: 'price_1T0OqQPMpeR5cfVrlqYtukAX',
+            quarterly: 'price_1T0OqRPMpeR5cfVrTIkv3B5S',
+            yearly: 'price_1T0OqRPMpeR5cfVrFERi7cry'
         },
         features: [
             { text: '150 Buscas de Leads / mês', icon: <Icons.Search size={18} strokeWidth={3} /> },
@@ -74,9 +74,9 @@ const PLANS: Plan[] = [
         buttonText: 'ASSINAR PRO',
         price: { monthly: 597, quarterly: 1617, yearly: 5388 },
         priceIds: {
-            monthly: 'price_1SzMIbPMpeR5cfVrIDfZM2Bl',
-            quarterly: 'price_1SzMJ5PMpeR5cfVrrR3Sshqw',
-            yearly: 'price_1SzMJnPMpeR5cfVrjnDl6y5Y'
+            monthly: 'price_1T0OqSPMpeR5cfVr499j0tbR',
+            quarterly: 'price_1T0OqSPMpeR5cfVrUq1g5XDw',
+            yearly: 'price_1T0OqTPMpeR5cfVrLnrMx2Kv'
         },
         features: [
             { text: '400 Buscas de Leads / mês', icon: <Icons.Search size={18} strokeWidth={3} /> },
@@ -95,9 +95,9 @@ const PLANS: Plan[] = [
         buttonText: 'ASSINAR SCALE',
         price: { monthly: 900, quarterly: 2430, yearly: 9600 },
         priceIds: {
-            monthly: 'price_1SzMNDPMpeR5cfVroAJzRdnr',
-            quarterly: 'price_1SzMNuPMpeR5cfVrYBezxNT5',
-            yearly: 'price_1SzMORPMpeR5cfVr65uI4xHV'
+            monthly: 'price_1T0OqTPMpeR5cfVrqfdp3NT6',
+            quarterly: 'price_1T0OqUPMpeR5cfVr3NcZjIWU',
+            yearly: 'price_1T0OqUPMpeR5cfVrWAFrth0g'
         },
         features: [
             { text: '1.000 Buscas de Leads / mês', icon: <Icons.Search size={18} strokeWidth={3} /> },
