@@ -169,10 +169,7 @@ export function PricingPage() {
             // Existing subscriptions will be handled by the webhook (canceling old ones)
 
             const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-                body: { price_id: priceId },
-                headers: {
-                    Authorization: `Bearer ${session?.access_token}`
-                }
+                body: { price_id: priceId }
             });
 
             if (error) {
