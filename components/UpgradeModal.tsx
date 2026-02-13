@@ -45,7 +45,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onU
                 description: 'Você usou todos os créditos do seu plano.',
                 offer: 'Faça o upgrade para o Plano Profissional e tenha mais poder.',
                 buttonText: 'Ver Plano Profissional',
-                icon: <Icons.TrendingUp size={32} className="text-primary" />
+                icon: <Icons.TrendingUp size={40} className="text-primary" strokeWidth={2.5} />
             };
         }
 
@@ -55,7 +55,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onU
                 description: 'Desbloqueie todo o poder da inteligência artificial.',
                 offer: 'Assine o Plano Básico por R$ 297 e libere 150 créditos mensais.',
                 buttonText: 'Fazer Upgrade para Básico',
-                icon: <Icons.Rocket size={32} className="text-primary" />
+                icon: <Icons.Rocket size={40} className="text-primary" strokeWidth={2.5} />
             };
         }
 
@@ -64,7 +64,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onU
             description: 'Você atingiu o limite do seu plano atual.',
             offer: 'Assine o Plano Básico por R$ 297 para liberar 150 créditos mensais.',
             buttonText: 'Liberar Créditos Agora',
-            icon: <Icons.Lock size={32} className="text-primary" />
+            icon: <Icons.Lock size={40} className="text-primary" strokeWidth={2.5} />
         };
     };
 
@@ -98,9 +98,9 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onU
                         <div className="max-h-[90vh] overflow-y-auto custom-scrollbar">
                             <div className="px-8 pb-10 -mt-10 relative">
                                 {/* Icon Circle */}
-                                <div className="w-24 h-24 bg-background-card rounded-[2rem] shadow-2xl flex items-center justify-center mb-8 mx-auto border-2 border-white/10 ring-8 ring-white/5 relative group-hover:scale-110 transition-transform duration-500">
-                                    <div className="absolute inset-0 bg-primary/20 rounded-[2rem] blur-xl opacity-50" />
-                                    <div className="relative z-10 transition-transform duration-500 hover:rotate-12">
+                                <div className="w-24 h-24 bg-background-card rounded-[2rem] shadow-2xl flex items-center justify-center mb-8 mx-auto border-2 border-white/10 ring-8 ring-white/5 relative group transition-all duration-500 hover:scale-110">
+                                    <div className="absolute inset-0 bg-primary/20 rounded-[2rem] blur-xl opacity-50 transition-opacity group-hover:opacity-100" />
+                                    <div className="relative z-10 transition-transform duration-500 group-hover:rotate-12 flex items-center justify-center">
                                         {content.icon}
                                     </div>
                                 </div>
